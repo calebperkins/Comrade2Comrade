@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="lib/bamboo.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/db-4.2.52.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="c2c/lib/linux"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/diva-26Sep02.jar"/>
+	<classpathentry kind="lib" path="lib/jrpcgen.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.8.jar"/>
+	<classpathentry kind="lib" path="lib/oncrpc.jar"/>
+	<classpathentry kind="lib" path="lib/ostore-seda-emu.jar"/>
+	<classpathentry kind="lib" path="lib/xmlrpc-1.2-b1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
