@@ -11,7 +11,6 @@ import bamboo.api.*;
 import bamboo.util.StandardStage;
 
 import seda.sandStorm.api.ConfigDataIF;
-import seda.sandStorm.api.EventHandlerException;
 import seda.sandStorm.api.QueueElementIF;
 import seda.sandStorm.api.StagesInitializedSignal;
 
@@ -27,7 +26,7 @@ public class SimpleStage extends StandardStage {
 	private boolean sender = false;
 
 	protected boolean initialized = false;
-	protected LinkedList wait_q = new LinkedList();
+	protected LinkedList<QueueElementIF> wait_q = new LinkedList<QueueElementIF>();
 
 	protected static class Payload implements QuickSerializable {
 		public String message;
@@ -40,10 +39,12 @@ public class SimpleStage extends StandardStage {
 			message = b.nextString();
 		}
 
+		@Override
 		public void serialize(OutputBuffer b) {
 			b.add(message);
 		}
 
+		@Override
 		public String toString() {
 			return "Payload with message: " + message;
 		}
@@ -74,6 +75,7 @@ public class SimpleStage extends StandardStage {
 	 * Initialize our stage. We get the parsed Config data from sandstorm and
 	 * may extract our own config options beside the global ones. <br>
 	 */
+	@Override
 	public void init(ConfigDataIF config) throws Exception {
 		super.init(config);
 
@@ -84,6 +86,7 @@ public class SimpleStage extends StandardStage {
 			sender = false; // default
 	}
 
+	@Override
 	public void handleEvent(QueueElementIF elem) {
 		logger.debug("Got event " + elem);
 
