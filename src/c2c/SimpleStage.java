@@ -103,7 +103,7 @@ public class SimpleStage extends StandardStage {
 				// handle pending events
 				initialized = true;
 				while (!wait_q.isEmpty())
-					handleEvent((QueueElementIF) wait_q.removeFirst());
+					handleEvent(wait_q.removeFirst());
 
 				// Dispatch in 10s a Alarm msg to stages on this node
 				if (sender)
@@ -113,7 +113,7 @@ public class SimpleStage extends StandardStage {
 			else
 				wait_q.addLast(elem);
 		}
-		// Normal opertional mode
+		// Normal operational mode
 		else {
 			// Event that we got a message delivered
 			if (elem instanceof BambooRouteDeliver) {
