@@ -14,7 +14,7 @@ import c2c.payloads.MapPair;
  */
 public class JobRequest implements QueueElementIF {
 	public final Set<MapPair> pairs = new HashSet<MapPair>();
-	
+
 	public void add(String key, String value) {
 		pairs.add(new MapPair(key, value));
 	}

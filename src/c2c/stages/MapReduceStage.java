@@ -13,8 +13,9 @@ import bamboo.util.StandardStage;
 public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
 	private final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
-	
-	protected MapReduceStage(Class<?> payload, Class<?>... events) throws Exception {
+
+	protected MapReduceStage(Class<?> payload, Class<?>... events)
+			throws Exception {
 		super();
 		if (payload != null) {
 			ostore.util.TypeTable.register_type(payload);
@@ -27,7 +28,7 @@ public abstract class MapReduceStage extends StandardStage {
 			event_types[i + 3] = events[i];
 		}
 	}
-	
+
 	@Override
 	public void handleEvent(QueueElementIF item) {
 		if (initialized)
@@ -35,7 +36,7 @@ public abstract class MapReduceStage extends StandardStage {
 		else
 			handleInitializationEvent(item);
 	}
-	
+
 	/**
 	 * Request an application ID, and queue all other events until we get one.
 	 * 
@@ -53,7 +54,8 @@ public abstract class MapReduceStage extends StandardStage {
 			pending_events.add(item);
 		}
 	}
-	
+
 	public abstract long getAppID();
+
 	protected abstract void handleOperationalEvent(QueueElementIF item);
 }

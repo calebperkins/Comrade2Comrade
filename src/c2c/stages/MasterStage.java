@@ -13,8 +13,9 @@ import bamboo.api.*;
 
 /**
  * Takes job requests from a Client and disperses them to mappers.
+ * 
  * @author caleb
- *
+ * 
  */
 public final class MasterStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
@@ -29,12 +30,12 @@ public final class MasterStage extends MapReduceStage {
 	public static void main(String[] args) throws Exception {
 		bamboo.lss.DustDevil.main(args);
 	}
-	
+
 	public MasterStage() throws Exception {
 		super(MapPair.class, JobRequest.class);
 		rand = new Random();
 	}
-	
+
 	@Override
 	public void init(ConfigDataIF config) throws Exception {
 		super.init(config);
@@ -55,15 +56,15 @@ public final class MasterStage extends MapReduceStage {
 			for (MapPair pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
 				BigInteger dest = bamboo.util.GuidTools.random_guid(rand);
-				BambooRouteInit init = new BambooRouteInit(dest, MappingStage.app_id, false,
-						false, pair);
+				BambooRouteInit init = new BambooRouteInit(dest,
+						MappingStage.app_id, false, false, pair);
 				dispatch(init);
 			}
 		} else {
 			BUG("Event " + item + " unknown.");
 		}
 	}
-	
+
 	/**
 	 * Word count request.
 	 */
@@ -79,6 +80,5 @@ public final class MasterStage extends MapReduceStage {
 	public long getAppID() {
 		return app_id;
 	}
-	
-	
+
 }

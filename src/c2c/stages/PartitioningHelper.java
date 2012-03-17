@@ -15,7 +15,7 @@ public class PartitioningHelper extends MapReduceStage {
 	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
-			BambooRouteDeliver d= (BambooRouteDeliver) item;
+			BambooRouteDeliver d = (BambooRouteDeliver) item;
 			dispatch((MapDone) d.payload);
 		} else {
 			BUG("lol");
@@ -26,7 +26,5 @@ public class PartitioningHelper extends MapReduceStage {
 	public long getAppID() {
 		return app_id;
 	}
-	
-	
 
 }

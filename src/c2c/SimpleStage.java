@@ -15,7 +15,7 @@ import seda.sandStorm.api.QueueElementIF;
 import seda.sandStorm.api.StagesInitializedSignal;
 
 public class SimpleStage extends StandardStage {
-	
+
 	public static void main(String[] args) throws Exception {
 		bamboo.lss.DustDevil.main(args);
 	}

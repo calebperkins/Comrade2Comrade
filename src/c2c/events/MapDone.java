@@ -10,11 +10,11 @@ import seda.sandStorm.api.QueueElementIF;
 
 public class MapDone implements QuickSerializable, QueueElementIF {
 	public final BigInteger node;
-	
+
 	public MapDone(BigInteger n) {
 		node = n;
 	}
-	
+
 	public MapDone(InputBuffer b) throws QSException {
 		node = b.nextBigInteger();
 	}

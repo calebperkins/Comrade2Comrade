@@ -11,8 +11,9 @@ import bamboo.api.*;
 
 /**
  * Collects results from mappers
+ * 
  * @author caleb
- *
+ * 
  */
 public class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
@@ -26,7 +27,7 @@ public class PartitioningStage extends MapReduceStage {
 		super(ReducerInput.class, MappingUnderway.class, MapDone.class);
 		ostore.util.TypeTable.register_type(MapPair.class);
 	}
-	
+
 	private void add(MapPair pair) {
 		if (results.containsKey(pair.key)) {
 			results.get(pair.key).add(pair.value);
@@ -35,7 +36,7 @@ public class PartitioningStage extends MapReduceStage {
 			add(pair);
 		}
 	}
-	
+
 	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
@@ -48,7 +49,8 @@ public class PartitioningStage extends MapReduceStage {
 				for (String key : results.keySet()) {
 					List<String> values = results.get(key);
 					ReducerInput payload = new ReducerInput(key, values);
-					signalReducer(bamboo.util.GuidTools.random_guid(rand), payload);
+					signalReducer(bamboo.util.GuidTools.random_guid(rand),
+							payload);
 				}
 			}
 		} else if (item instanceof MappingUnderway) {
@@ -56,15 +58,15 @@ public class PartitioningStage extends MapReduceStage {
 			expected = ((MappingUnderway) item).expected;
 		}
 	}
-	
+
 	private void signalReducer(BigInteger node, ReducerInput payload) {
-		dispatch(new BambooRouteInit(node, ReducingStage.app_id, false, false, payload));
+		dispatch(new BambooRouteInit(node, ReducingStage.app_id, false, false,
+				payload));
 	}
 
 	@Override
 	public long getAppID() {
 		return app_id;
 	}
-	
-	
+
 }

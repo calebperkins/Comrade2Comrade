@@ -7,11 +7,11 @@ import ostore.util.QuickSerializable;
 
 public class ReducerOutput implements QuickSerializable {
 	public final String value;
-	
+
 	public ReducerOutput(String v) {
 		value = v;
 	}
-	
+
 	public ReducerOutput(InputBuffer b) throws QSException {
 		value = b.nextString();
 	}
@@ -20,7 +20,7 @@ public class ReducerOutput implements QuickSerializable {
 	public void serialize(OutputBuffer b) {
 		b.add(value);
 	}
-	
+
 	@Override
 	public String toString() {
 		return value;

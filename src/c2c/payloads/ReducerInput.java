@@ -8,12 +8,12 @@ import ostore.util.*;
 public class ReducerInput implements QuickSerializable {
 	public final String key;
 	public final List<String> values;
-	
+
 	public ReducerInput(String key, List<String> values) {
 		this.key = key;
 		this.values = values;
 	}
-	
+
 	public ReducerInput(InputBuffer buf) {
 		key = buf.nextString();
 		int size = buf.nextInt();

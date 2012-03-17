@@ -37,9 +37,11 @@ public final class MappingStage extends MapReduceStage {
 		String[] words = pay.value.split("\\s+");
 		for (String w : words) {
 			MapPair p = new MapPair(w, "1");
-			dispatch(new BambooRouteInit(x.src, PartitioningStage.app_id, false, false, p));
+			dispatch(new BambooRouteInit(x.src, PartitioningStage.app_id,
+					false, false, p));
 		}
-		dispatch(new BambooRouteInit(x.src, PartitioningHelper.app_id, false, false, new MapDone(x.dest)));
+		dispatch(new BambooRouteInit(x.src, PartitioningHelper.app_id, false,
+				false, new MapDone(x.dest)));
 	}
 
 	@Override
