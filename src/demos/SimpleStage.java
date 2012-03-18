@@ -1,4 +1,4 @@
-package c2c;
+package demos;
 
 import java.math.BigInteger;
 import java.util.LinkedList;
