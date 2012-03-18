@@ -1,6 +1,5 @@
 package c2c.stages;
 
-import java.math.BigInteger;
 import seda.sandStorm.api.ConfigDataIF;
 import seda.sandStorm.api.QueueElementIF;
 
@@ -49,10 +48,8 @@ public final class MasterStage extends MapReduceStage {
 			dispatch(new MappingUnderway(req.pairs.size()));
 			for (MapPair pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
-				BigInteger dest = MapReduceStage.randomNode();
-				BambooRouteInit init = new BambooRouteInit(dest,
-						MappingStage.app_id, false, false, pair);
-				dispatch(init);
+				dispatchTo(MapReduceStage.randomNode(), MappingStage.app_id,
+						pair);
 			}
 		} else {
 			BUG("Event " + item + " unknown.");

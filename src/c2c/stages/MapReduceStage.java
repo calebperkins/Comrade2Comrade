@@ -5,9 +5,12 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import ostore.util.QuickSerializable;
+
 import seda.sandStorm.api.QueueElementIF;
 import seda.sandStorm.api.StagesInitializedSignal;
 import bamboo.api.BambooRouteDeliver;
+import bamboo.api.BambooRouteInit;
 import bamboo.api.BambooRouterAppRegReq;
 import bamboo.api.BambooRouterAppRegResp;
 import bamboo.util.StandardStage;
@@ -92,7 +95,21 @@ public abstract class MapReduceStage extends StandardStage {
 	 */
 	protected abstract void handleOperationalEvent(QueueElementIF item);
 	
+	/**
+	 * Get a random node ID
+	 * @return a random node ID
+	 */
 	protected static BigInteger randomNode() {
 		return bamboo.util.GuidTools.random_guid(rand);
+	}
+	
+	/**
+	 * Routes to a remote node over Bamboo
+	 * @param dest
+	 * @param app_id
+	 * @param payload
+	 */
+	public final void dispatchTo(BigInteger dest, long app_id, QuickSerializable payload) {
+		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 }

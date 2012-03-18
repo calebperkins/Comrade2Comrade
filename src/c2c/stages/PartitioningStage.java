@@ -60,8 +60,7 @@ public final class PartitioningStage extends MapReduceStage {
 	}
 
 	private void signalReducer(BigInteger node, ReducerInput payload) {
-		dispatch(new BambooRouteInit(node, ReducingStage.app_id, false, false,
-				payload));
+		dispatchTo(node, ReducingStage.app_id, payload);
 	}
 
 	@Override

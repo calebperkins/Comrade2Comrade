@@ -46,8 +46,6 @@ public final class ReducingStage extends MapReduceStage implements
 	@Override
 	public void collect(String key, String value) {
 		ReducerOutput p = new ReducerOutput(key + ":" + value);
-		dispatch(new BambooRouteInit(BigInteger.ZERO, MasterStage.app_id,
-				false, false, p));
-
+		dispatchTo(BigInteger.ZERO, MasterStage.app_id, p);
 	}
 }

@@ -25,8 +25,7 @@ public final class MappingStage extends MapReduceStage {
 		@Override
 		public void collect(String key, String value) {
 			MapPair p = new MapPair(key, value);
-			ms.dispatch(new BambooRouteInit(dest, PartitioningStage.app_id,
-					false, false, p));	
+			ms.dispatchTo(dest, PartitioningStage.app_id, p);
 		}
 		
 	}
@@ -65,8 +64,7 @@ public final class MappingStage extends MapReduceStage {
 		logger.info("Computing " + pay);
 		OutputCollector c = new Collector(this, x.src);
 		mapper.map(pay.key, pay.value, c);
-		dispatch(new BambooRouteInit(x.src, PartitioningHelper.app_id, false,
-				false, new MapDone(x.dest)));
+		dispatchTo(x.src, PartitioningHelper.app_id, new MapDone(x.dest));
 	}
 
 	@Override
