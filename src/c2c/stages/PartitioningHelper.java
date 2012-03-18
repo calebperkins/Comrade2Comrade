@@ -4,7 +4,7 @@ import bamboo.api.BambooRouteDeliver;
 import seda.sandStorm.api.QueueElementIF;
 import c2c.events.*;
 
-public class PartitioningHelper extends MapReduceStage {
+public final class PartitioningHelper extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningHelper.class);
 

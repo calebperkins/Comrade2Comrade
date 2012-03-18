@@ -1,8 +1,6 @@
 package c2c.stages;
 
 import java.math.BigInteger;
-import java.util.Random;
-
 import seda.sandStorm.api.ConfigDataIF;
 import seda.sandStorm.api.QueueElementIF;
 
@@ -20,8 +18,6 @@ import bamboo.api.*;
 public final class MasterStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(MasterStage.class);
-	private final Random rand;
-	private boolean test_mode;
 
 	/**
 	 * @param args
@@ -33,15 +29,13 @@ public final class MasterStage extends MapReduceStage {
 
 	public MasterStage() throws Exception {
 		super(MapPair.class, JobRequest.class);
-		rand = new Random();
 	}
 
 	@Override
 	public void init(ConfigDataIF config) throws Exception {
 		super.init(config);
 		String mode = config_get_string(config, "mode");
-		test_mode = mode != null && mode.equals("master");
-		if (test_mode)
+		if (mode != null && mode.equals("master"))
 			sendTestJob();
 	}
 
@@ -55,7 +49,7 @@ public final class MasterStage extends MapReduceStage {
 			dispatch(new MappingUnderway(req.pairs.size()));
 			for (MapPair pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
-				BigInteger dest = bamboo.util.GuidTools.random_guid(rand);
+				BigInteger dest = MapReduceStage.randomNode();
 				BambooRouteInit init = new BambooRouteInit(dest,
 						MappingStage.app_id, false, false, pair);
 				dispatch(init);

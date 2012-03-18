@@ -1,7 +1,9 @@
 package c2c.stages;
 
+import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 
 import seda.sandStorm.api.QueueElementIF;
 import seda.sandStorm.api.StagesInitializedSignal;
@@ -10,10 +12,30 @@ import bamboo.api.BambooRouterAppRegReq;
 import bamboo.api.BambooRouterAppRegResp;
 import bamboo.util.StandardStage;
 
+/**
+ * Extends StandardStage to handle registering the stage and events.
+ * 
+ * Users need only override the constructor and two abstract methods.
+ * 
+ * @author Caleb Perkins
+ * 
+ */
 public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
 	private final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
+	protected static final Random rand = new Random();
 
+	/**
+	 * Register a stage with one payload and zero or more events.
+	 * 
+	 * This registers three common events for you.
+	 * 
+	 * @param payload
+	 *            a payload, may be null
+	 * @param events
+	 *            additional events to subscribe to
+	 * @throws Exception
+	 */
 	protected MapReduceStage(Class<?> payload, Class<?>... events)
 			throws Exception {
 		super();
@@ -30,7 +52,7 @@ public abstract class MapReduceStage extends StandardStage {
 	}
 
 	@Override
-	public void handleEvent(QueueElementIF item) {
+	public final void handleEvent(QueueElementIF item) {
 		if (initialized)
 			handleOperationalEvent(item);
 		else
@@ -55,7 +77,22 @@ public abstract class MapReduceStage extends StandardStage {
 		}
 	}
 
-	public abstract long getAppID();
+	/**
+	 * Bamboo needs an identifier to route events to the right stage.
+	 * 
+	 * @return this stage's application ID
+	 */
+	protected abstract long getAppID();
 
+	/**
+	 * Handles all events post-initialization.
+	 * 
+	 * @param item
+	 *            the event to process
+	 */
 	protected abstract void handleOperationalEvent(QueueElementIF item);
+	
+	protected static BigInteger randomNode() {
+		return bamboo.util.GuidTools.random_guid(rand);
+	}
 }

@@ -15,13 +15,12 @@ import bamboo.api.*;
  * @author caleb
  * 
  */
-public class PartitioningStage extends MapReduceStage {
+public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
 	private Map<String, List<String>> results = new HashMap<String, List<String>>();
 	private int expected = 0;
 	private int received = 0;
-	private final Random rand = new Random();
 
 	public PartitioningStage() throws Exception {
 		super(ReducerInput.class, MappingUnderway.class, MapDone.class);
@@ -49,13 +48,14 @@ public class PartitioningStage extends MapReduceStage {
 				for (String key : results.keySet()) {
 					List<String> values = results.get(key);
 					ReducerInput payload = new ReducerInput(key, values);
-					signalReducer(bamboo.util.GuidTools.random_guid(rand),
-							payload);
+					signalReducer(MapReduceStage.randomNode(), payload);
 				}
 			}
 		} else if (item instanceof MappingUnderway) {
 			logger.info("what");
 			expected = ((MappingUnderway) item).expected;
+		} else {
+			BUG("Event unknown");
 		}
 	}
 
