@@ -24,10 +24,10 @@ public final class PartitioningStage extends MapReduceStage {
 
 	public PartitioningStage() throws Exception {
 		super(ReducerInput.class, MappingUnderway.class, MapDone.class);
-		ostore.util.TypeTable.register_type(MapPair.class);
+		ostore.util.TypeTable.register_type(KeyValue.class);
 	}
 
-	private void add(MapPair pair) {
+	private void add(KeyValue pair) {
 		if (results.containsKey(pair.key)) {
 			results.get(pair.key).add(pair.value);
 		} else {
@@ -40,7 +40,7 @@ public final class PartitioningStage extends MapReduceStage {
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver d = (BambooRouteDeliver) item;
-			add((MapPair) d.payload);
+			add((KeyValue) d.payload);
 		} else if (item instanceof MapDone) {
 			logger.info("got it");
 			received++;

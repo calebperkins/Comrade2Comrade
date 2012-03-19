@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import seda.sandStorm.api.QueueElementIF;
-import c2c.payloads.MapPair;
+import c2c.payloads.KeyValue;
 
 /**
  * A set of key-value pairs for mapping. TODO: add job descriptor
@@ -13,9 +13,9 @@ import c2c.payloads.MapPair;
  * 
  */
 public class JobRequest implements QueueElementIF {
-	public final Set<MapPair> pairs = new HashSet<MapPair>();
+	public final Set<KeyValue> pairs = new HashSet<KeyValue>();
 
 	public void add(String key, String value) {
-		pairs.add(new MapPair(key, value));
+		pairs.add(new KeyValue(key, value));
 	}
 }

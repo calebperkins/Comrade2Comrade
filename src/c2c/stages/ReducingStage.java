@@ -4,7 +4,8 @@ import seda.sandStorm.api.*;
 import c2c.api.*;
 import bamboo.api.*;
 import java.math.BigInteger;
-import c2c.payloads.ReducerOutput;
+
+import c2c.payloads.KeyValue;
 import c2c.payloads.ReducerInput;
 
 public final class ReducingStage extends MapReduceStage implements
@@ -17,7 +18,7 @@ public final class ReducingStage extends MapReduceStage implements
 
 	public ReducingStage() throws Exception {
 		super(ReducerInput.class);
-		ostore.util.TypeTable.register_type(ReducerOutput.class);
+		ostore.util.TypeTable.register_type(KeyValue.class);
 	}
 
 	@Override
@@ -45,7 +46,7 @@ public final class ReducingStage extends MapReduceStage implements
 
 	@Override
 	public void collect(String key, String value) {
-		ReducerOutput p = new ReducerOutput(key + ":" + value);
+		KeyValue p = new KeyValue(key, value);
 		dispatchTo(BigInteger.ZERO, MasterStage.app_id, p);
 	}
 }

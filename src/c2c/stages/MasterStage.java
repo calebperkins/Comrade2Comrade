@@ -27,8 +27,7 @@ public final class MasterStage extends MapReduceStage {
 	}
 
 	public MasterStage() throws Exception {
-		super(MapPair.class, JobRequest.class);
-		ostore.util.TypeTable.register_type(ReducerOutput.class);
+		super(KeyValue.class, JobRequest.class);
 	}
 
 	@Override
@@ -47,7 +46,7 @@ public final class MasterStage extends MapReduceStage {
 		} else if (item instanceof JobRequest) { // Distribute jobs.
 			JobRequest req = (JobRequest) item;
 			dispatch(new MappingUnderway(req.pairs.size()));
-			for (MapPair pair : req.pairs) {
+			for (KeyValue pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
 				dispatchTo(MapReduceStage.randomNode(), MappingStage.app_id,
 						pair);

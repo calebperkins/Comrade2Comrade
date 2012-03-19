@@ -4,7 +4,7 @@ import java.math.BigInteger;
 
 import c2c.events.MapDone;
 import c2c.api.*;
-import c2c.payloads.MapPair;
+import c2c.payloads.KeyValue;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
@@ -24,7 +24,7 @@ public final class MappingStage extends MapReduceStage {
 
 		@Override
 		public void collect(String key, String value) {
-			MapPair p = new MapPair(key, value);
+			KeyValue p = new KeyValue(key, value);
 			ms.dispatchTo(dest, PartitioningStage.app_id, p);
 		}
 		
@@ -34,7 +34,7 @@ public final class MappingStage extends MapReduceStage {
 			.app_id(MappingStage.class);
 
 	public MappingStage() throws Exception {
-		super(MapPair.class);
+		super(KeyValue.class);
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public final class MappingStage extends MapReduceStage {
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) { // do the computation
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
-			map((MapPair) deliver.payload, deliver);
+			map((KeyValue) deliver.payload, deliver);
 		} else {
 			BUG("Event " + item + " unknown.");
 		}
@@ -60,7 +60,7 @@ public final class MappingStage extends MapReduceStage {
 	 * @param pay
 	 * @param src
 	 */
-	private void map(MapPair pay, BambooRouteDeliver x) {
+	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
 		OutputCollector c = new Collector(this, x.src);
 		mapper.map(pay.key, pay.value, c);

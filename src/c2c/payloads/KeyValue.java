@@ -11,16 +11,16 @@ import ostore.util.QuickSerializable;
  * @author caleb
  * 
  */
-public class MapPair implements QuickSerializable, Comparable<MapPair> {
+public class KeyValue implements QuickSerializable, Comparable<KeyValue> {
 	public final String key;
 	public final String value;
 
-	public MapPair(String k, String v) {
+	public KeyValue(String k, String v) {
 		key = k;
 		value = v;
 	}
 
-	public MapPair(InputBuffer buf) throws QSException {
+	public KeyValue(InputBuffer buf) throws QSException {
 		key = buf.nextString();
 		value = buf.nextString();
 	}
@@ -38,8 +38,8 @@ public class MapPair implements QuickSerializable, Comparable<MapPair> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof MapPair) {
-			MapPair other = (MapPair) obj;
+		if (obj instanceof KeyValue) {
+			KeyValue other = (KeyValue) obj;
 			return other.key.equals(key) && other.value.equals(value);
 		}
 		return false;
@@ -51,7 +51,7 @@ public class MapPair implements QuickSerializable, Comparable<MapPair> {
 	}
 
 	@Override
-	public int compareTo(MapPair x) {
+	public int compareTo(KeyValue x) {
 		return key.compareTo(x.key);
 	}
 
