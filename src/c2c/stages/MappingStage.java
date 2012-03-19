@@ -64,7 +64,7 @@ public final class MappingStage extends MapReduceStage {
 		logger.info("Computing " + pay);
 		OutputCollector c = new Collector(this, x.src);
 		mapper.map(pay.key, pay.value, c);
-		dispatchTo(x.src, PartitioningHelper.app_id, new MapDone(x.dest));
+		dispatchTo(x.src, PartitioningStage.app_id, new MapDone(x.dest));
 	}
 
 	@Override

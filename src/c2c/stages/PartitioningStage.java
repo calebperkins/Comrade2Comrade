@@ -23,8 +23,9 @@ public final class PartitioningStage extends MapReduceStage {
 	private int received = 0;
 
 	public PartitioningStage() throws Exception {
-		super(ReducerInput.class, MappingUnderway.class, MapDone.class);
+		super(ReducerInput.class, MappingUnderway.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
+		ostore.util.TypeTable.register_type(MapDone.class);
 	}
 
 	private void add(KeyValue pair) {
@@ -40,16 +41,19 @@ public final class PartitioningStage extends MapReduceStage {
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver d = (BambooRouteDeliver) item;
-			add((KeyValue) d.payload);
-		} else if (item instanceof MapDone) {
-			logger.info("got it");
-			received++;
-			if (expected == received) { // distribute to reducers
-				for (String key : results.keySet()) {
-					List<String> values = results.get(key);
-					ReducerInput payload = new ReducerInput(key, values);
-					signalReducer(MapReduceStage.randomNode(), payload);
+			if (d.payload instanceof KeyValue) {
+				add((KeyValue) d.payload);
+			} else if (d.payload instanceof MapDone) {
+				received++;
+				if (expected == received) { // distribute to reducers
+					for (String key : results.keySet()) {
+						List<String> values = results.get(key);
+						ReducerInput payload = new ReducerInput(key, values);
+						signalReducer(MapReduceStage.randomNode(), payload);
+					}
 				}
+			} else {
+				BUG("Unknown payload:" + d.payload);
 			}
 		} else if (item instanceof MappingUnderway) {
 			logger.info("what");
