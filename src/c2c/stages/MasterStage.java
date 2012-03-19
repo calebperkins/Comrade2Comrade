@@ -28,6 +28,7 @@ public final class MasterStage extends MapReduceStage {
 
 	public MasterStage() throws Exception {
 		super(MapPair.class, JobRequest.class);
+		ostore.util.TypeTable.register_type(ReducerOutput.class);
 	}
 
 	@Override
