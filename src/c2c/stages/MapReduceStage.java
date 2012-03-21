@@ -127,8 +127,12 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 
-	public void requestPut(String key, String value) {
-		BigInteger k = new BigInteger(key.getBytes(charset));
+	public void requestPut(String key, String value, boolean allow_duplicates) {
+		if (allow_duplicates) // dirty hack
+			value = value + ":::" + rand.nextInt();
+		else
+			value = value + ":::0";
+		BigInteger k = nodeFromKey(key);
 		ByteBuffer v = ByteBuffer.wrap(value.getBytes(charset));
 		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
 		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink, null,
@@ -136,11 +140,22 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(req);
 	}
 
+	/***
+	 * Request a GET for a key. The response can be captured by listening to the
+	 * Dht.GetResp event. The key will be stored in the user_data attribute on
+	 * the response.
+	 * 
+	 * @param key
+	 */
 	public void requestGet(String key) {
-		BigInteger k = new BigInteger(key.getBytes());
-		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, null,
+		BigInteger k = nodeFromKey(key);
+		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, key,
 				my_node_id);
 		dispatch(req);
+	}
+
+	public BigInteger nodeFromKey(String key) {
+		return new BigInteger(key.getBytes(charset));
 	}
 
 	/**
@@ -168,7 +183,10 @@ public abstract class MapReduceStage extends StandardStage {
 		public String next() {
 			ByteBuffer buffer = raw.next().value;
 			try {
-				return decoder.decode(buffer).toString();
+				String data = decoder.decode(buffer).toString();
+				String[] split = data.split(":::"); // dirty hack to allow
+													// duplicates
+				return split[0];
 			} catch (CharacterCodingException e) {
 				// TODO handle this better. Should be a fatal error?
 				e.printStackTrace();

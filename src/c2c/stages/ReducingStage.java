@@ -3,6 +3,9 @@ package c2c.stages;
 import seda.sandStorm.api.*;
 import c2c.api.*;
 import bamboo.api.*;
+import bamboo.dht.Dht;
+import bamboo.dht.Dht.GetResp;
+
 import java.math.BigInteger;
 
 import c2c.payloads.KeyValue;
@@ -17,7 +20,7 @@ public final class ReducingStage extends MapReduceStage implements
 	private Reducer reducer;
 
 	public ReducingStage() throws Exception {
-		super(ReducerInput.class);
+		super(ReducerInput.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
 	}
 
@@ -33,7 +36,10 @@ public final class ReducingStage extends MapReduceStage implements
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
 			ReducerInput payload = (ReducerInput) deliver.payload;
-			reducer.reduce(payload.key, payload.values.iterator(), this);
+			requestGet(payload.key);
+		} else if (item instanceof Dht.GetResp) {
+			Dht.GetResp resp = (GetResp) item;
+			reducer.reduce((String) resp.user_data, parseGetResp(resp), this);
 		} else {
 			BUG("Unexpected event:" + item);
 		}

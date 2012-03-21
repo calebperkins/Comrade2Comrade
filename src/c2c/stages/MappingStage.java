@@ -1,40 +1,23 @@
 package c2c.stages;
 
-import java.math.BigInteger;
-
 import c2c.events.MapDone;
 import c2c.api.*;
 import c2c.payloads.KeyValue;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
+import bamboo.dht.Dht;
 
-public final class MappingStage extends MapReduceStage {
+public final class MappingStage extends MapReduceStage implements
+		OutputCollector {
 	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
 	private Mapper mapper;
-	
-	private static class Collector implements OutputCollector {
-		private BigInteger dest;
-		private MappingStage ms;
-		
-		public Collector(MappingStage ms, BigInteger dest) {
-			this.ms = ms;
-			this.dest = dest;
-		}
-
-		@Override
-		public void collect(String key, String value) {
-			KeyValue p = new KeyValue(key, value);
-			ms.dispatchTo(dest, PartitioningStage.app_id, p);
-		}
-		
-	}
 
 	public static final long app_id = bamboo.router.Router
 			.app_id(MappingStage.class);
 
 	public MappingStage() throws Exception {
-		super(KeyValue.class);
+		super(KeyValue.class, Dht.PutResp.class);
 	}
 
 	@Override
@@ -49,27 +32,34 @@ public final class MappingStage extends MapReduceStage {
 		if (item instanceof BambooRouteDeliver) { // do the computation
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
 			map((KeyValue) deliver.payload, deliver);
+		} else if (item instanceof Dht.PutResp) {
+			// TODO check response
 		} else {
 			BUG("Event " + item + " unknown.");
 		}
 	}
 
 	/**
-	 * Perform the computation and send it back to master
+	 * Perform the computation and inform master the mapping is done.
 	 * 
 	 * @param pay
 	 * @param src
 	 */
 	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
-		OutputCollector c = new Collector(this, x.src);
-		mapper.map(pay.key, pay.value, c);
-		dispatchTo(x.src, PartitioningStage.app_id, new MapDone(x.dest));
+		mapper.map(pay.key, pay.value, this);
+		dispatchTo(x.src, PartitioningStage.app_id, new MapDone(pay.key));
 	}
 
 	@Override
 	public long getAppID() {
 		return app_id;
+	}
+
+	@Override
+	public void collect(String key, String value) {
+		requestPut(key, value, true);
+		requestPut("intermediate-keys", key, false);
 	}
 
 }

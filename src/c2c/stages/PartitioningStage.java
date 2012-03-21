@@ -1,6 +1,5 @@
 package c2c.stages;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import c2c.payloads.*;
@@ -8,63 +7,45 @@ import c2c.events.*;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
+import bamboo.dht.Dht;
 
 /**
- * Collects results from mappers
+ * Waits until mappers are done and initiates reducing.
  * 
- * @author caleb
+ * @author Caleb Perkins
  * 
  */
 public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
-	private Map<String, List<String>> results = new HashMap<String, List<String>>();
 	private int expected = 0;
 	private int received = 0;
 
 	public PartitioningStage() throws Exception {
-		super(ReducerInput.class, MappingUnderway.class);
+		super(ReducerInput.class, MappingUnderway.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
 		ostore.util.TypeTable.register_type(MapDone.class);
-	}
-
-	private void add(KeyValue pair) {
-		if (results.containsKey(pair.key)) {
-			results.get(pair.key).add(pair.value);
-		} else {
-			results.put(pair.key, new ArrayList<String>());
-			add(pair);
-		}
 	}
 
 	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
-			BambooRouteDeliver d = (BambooRouteDeliver) item;
-			if (d.payload instanceof KeyValue) {
-				add((KeyValue) d.payload);
-			} else if (d.payload instanceof MapDone) {
-				received++;
-				if (expected == received) { // distribute to reducers
-					for (String key : results.keySet()) {
-						List<String> values = results.get(key);
-						ReducerInput payload = new ReducerInput(key, values);
-						signalReducer(MapReduceStage.randomNode(), payload);
-					}
-				}
-			} else {
-				BUG("Unknown payload:" + d.payload);
+			received++;
+			if (expected == received) { // Mapping is done. Start reducing.
+				requestGet("intermediate-keys");
 			}
 		} else if (item instanceof MappingUnderway) {
-			logger.info("what");
 			expected = ((MappingUnderway) item).expected;
+		} else if (item instanceof Dht.GetResp) {
+			Iterator<String> keys = parseGetResp((Dht.GetResp) item);
+			while (keys.hasNext()) {
+				String key = keys.next();
+				dispatchTo(nodeFromKey(key), ReducingStage.app_id,
+						new ReducerInput(key));
+			}
 		} else {
 			BUG("Event unknown");
 		}
-	}
-
-	private void signalReducer(BigInteger node, ReducerInput payload) {
-		dispatchTo(node, ReducingStage.app_id, payload);
 	}
 
 	@Override
