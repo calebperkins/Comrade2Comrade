@@ -11,7 +11,7 @@ import bamboo.api.*;
 /**
  * Takes job requests from a Client and disperses them to mappers.
  * 
- * @author caleb
+ * @author Caleb Perkins
  * 
  */
 public final class MasterStage extends MapReduceStage {
@@ -33,8 +33,7 @@ public final class MasterStage extends MapReduceStage {
 	@Override
 	public void init(ConfigDataIF config) throws Exception {
 		super.init(config);
-		String mode = config_get_string(config, "mode");
-		if (mode != null && mode.equals("master"))
+		if (config_get_boolean(config, "master"))
 			sendTestJob();
 	}
 
