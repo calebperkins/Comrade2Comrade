@@ -58,7 +58,7 @@ public final class MasterStage extends MapReduceStage {
 	/**
 	 * Word count request.
 	 */
-	private void sendTestJob() {
+	private void sendTestJob() { // TODO: remove
 		JobRequest req = new JobRequest();
 		req.add("bears.txt", "Bears enjoy mauling and walks in the park");
 		req.add("cats.txt", "Cats enjoy the park and they like cat nip too");

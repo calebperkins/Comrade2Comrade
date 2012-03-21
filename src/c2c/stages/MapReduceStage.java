@@ -147,7 +147,7 @@ public abstract class MapReduceStage extends StandardStage {
 	 * Makes parsing a GET value cleaner, because Bamboo does not use generics
 	 * for the Dht.GetResp values yet, and they are ByteBuffers.
 	 * 
-	 * @author caleb
+	 * @author Caleb Perkins
 	 * 
 	 */
 	private static class GetRespIterator implements Iterator<String> {
@@ -168,14 +168,11 @@ public abstract class MapReduceStage extends StandardStage {
 		public String next() {
 			ByteBuffer buffer = raw.next().value;
 			try {
-				int old_position = buffer.position();
-				String data = decoder.decode(buffer).toString();
-				// reset buffer's position to its original so it is not altered:
-				buffer.position(old_position);
-				return data;
+				return decoder.decode(buffer).toString();
 			} catch (CharacterCodingException e) {
+				// TODO handle this better. Should be a fatal error?
 				e.printStackTrace();
-				return "";
+				return null;
 			}
 		}
 
