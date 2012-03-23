@@ -47,7 +47,7 @@ public final class MasterStage extends MapReduceStage {
 			dispatch(new MappingUnderway(req.pairs.size()));
 			for (KeyValue pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
-				dispatchTo(MapReduceStage.randomNode(), MappingStage.app_id,
+				dispatchTo(randomNode(), MappingStage.app_id,
 						pair);
 			}
 		} else {

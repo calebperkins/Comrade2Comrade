@@ -108,7 +108,7 @@ public abstract class MapReduceStage extends StandardStage {
 	 * 
 	 * @return a random node ID
 	 */
-	protected static BigInteger randomNode() {
+	protected BigInteger randomNode() {
 		return bamboo.util.GuidTools.random_guid(rand);
 	}
 
@@ -184,13 +184,13 @@ public abstract class MapReduceStage extends StandardStage {
 			ByteBuffer buffer = raw.next().value;
 			try {
 				String data = decoder.decode(buffer).toString();
-				String[] split = data.split(":::"); // dirty hack to allow
-													// duplicates
-				return split[0];
+
+				// dirty hack to allow duplicates
+				return data.split(":::")[0];
 			} catch (CharacterCodingException e) {
 				// TODO handle this better. Should be a fatal error?
-				e.printStackTrace();
-				return null;
+				System.err.println(e);
+				return "";
 			}
 		}
 
