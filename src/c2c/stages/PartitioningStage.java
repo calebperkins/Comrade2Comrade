@@ -1,7 +1,5 @@
 package c2c.stages;
 
-import java.util.*;
-
 import c2c.payloads.*;
 import c2c.events.*;
 
@@ -37,9 +35,8 @@ public final class PartitioningStage extends MapReduceStage {
 		} else if (item instanceof MappingUnderway) {
 			expected = ((MappingUnderway) item).expected;
 		} else if (item instanceof Dht.GetResp) {
-			Iterator<String> keys = parseGetResp((Dht.GetResp) item);
-			while (keys.hasNext()) {
-				String key = keys.next();
+			Iterable<String> keys = parseGetResp((Dht.GetResp) item);
+			for (String key : keys) {
 				dispatchTo(nodeFromKey(key), ReducingStage.app_id,
 						new ReducerInput(key));
 			}

@@ -2,10 +2,7 @@ package c2c.stages;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -34,7 +31,7 @@ public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
 	private final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
 	protected static final Random rand = new Random();
-	private static final Charset charset = Charset.forName("UTF-8");
+	public static final Charset charset = Charset.forName("UTF-8");
 
 	/**
 	 * Register a stage with one payload and zero or more events.
@@ -158,50 +155,7 @@ public abstract class MapReduceStage extends StandardStage {
 		return new BigInteger(key.getBytes(charset));
 	}
 
-	/**
-	 * Makes parsing a GET value cleaner, because Bamboo does not use generics
-	 * for the Dht.GetResp values yet, and they are ByteBuffers.
-	 * 
-	 * @author Caleb Perkins
-	 * 
-	 */
-	private static class GetRespIterator implements Iterator<String> {
-		private Iterator<Dht.GetValue> raw;
-		private static final CharsetDecoder decoder = charset.newDecoder();
-
-		@SuppressWarnings("unchecked")
-		public GetRespIterator(Dht.GetResp resp) {
-			raw = resp.values.iterator();
-		}
-
-		@Override
-		public boolean hasNext() {
-			return raw.hasNext();
-		}
-
-		@Override
-		public String next() {
-			ByteBuffer buffer = raw.next().value;
-			try {
-				String data = decoder.decode(buffer).toString();
-
-				// dirty hack to allow duplicates
-				return data.split(":::")[0];
-			} catch (CharacterCodingException e) {
-				// TODO handle this better. Should be a fatal error?
-				System.err.println(e);
-				return "";
-			}
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-	}
-
-	public Iterator<String> parseGetResp(Dht.GetResp resp) {
-		return new GetRespIterator(resp);
+	public Iterable<String> parseGetResp(Dht.GetResp resp) {
+		return new c2c.utilities.DhtValues(resp);
 	}
 }
