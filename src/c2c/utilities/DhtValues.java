@@ -18,7 +18,7 @@ import bamboo.dht.Dht;
  * 
  */
 public class DhtValues implements Iterable<String> {
-	private static final CharsetDecoder decoder = MapReduceStage.charset.newDecoder();
+	private static final CharsetDecoder decoder = MapReduceStage.CHARSET.newDecoder();
 	private LinkedList<Dht.GetValue> values;
 
 	private class GetRespIterator implements Iterator<String> {
@@ -36,7 +36,7 @@ public class DhtValues implements Iterable<String> {
 				String data = decoder.decode(buffer).toString();
 
 				// dirty hack to allow duplicates
-				return data.split(":::")[0];
+				return data.split(c2c.stages.MapReduceStage.DELIMITER, 2)[1];
 			} catch (CharacterCodingException e) {
 				// TODO handle this better. Should be a fatal error?
 				System.err.println(e);

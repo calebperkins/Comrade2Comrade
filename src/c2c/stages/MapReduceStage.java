@@ -31,7 +31,8 @@ public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
 	private final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
 	protected static final Random rand = new Random();
-	public static final Charset charset = Charset.forName("UTF-8");
+	public static final Charset CHARSET = Charset.forName("UTF-8");
+	public static final String DELIMITER = ":";
 
 	/**
 	 * Register a stage with one payload and zero or more events.
@@ -126,11 +127,11 @@ public abstract class MapReduceStage extends StandardStage {
 
 	public void requestPut(String key, String value, boolean allow_duplicates) {
 		if (allow_duplicates) // dirty hack
-			value = value + ":::" + rand.nextInt();
+			value = rand.nextInt() + DELIMITER + value;
 		else
-			value = value + ":::0";
+			value = "0" + DELIMITER + value;
 		BigInteger k = nodeFromKey(key);
-		ByteBuffer v = ByteBuffer.wrap(value.getBytes(charset));
+		ByteBuffer v = ByteBuffer.wrap(value.getBytes(CHARSET));
 		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
 		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink, null,
 				Dht.MAX_TTL_SEC, my_node_id.address());
@@ -152,7 +153,7 @@ public abstract class MapReduceStage extends StandardStage {
 	}
 
 	public BigInteger nodeFromKey(String key) {
-		return new BigInteger(key.getBytes(charset));
+		return new BigInteger(key.getBytes(CHARSET));
 	}
 
 	public Iterable<String> parseGetResp(Dht.GetResp resp) {
