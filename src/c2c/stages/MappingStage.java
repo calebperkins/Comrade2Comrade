@@ -1,7 +1,7 @@
 package c2c.stages;
 
-import c2c.events.MapDone;
 import c2c.api.*;
+import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 
 import seda.sandStorm.api.*;
@@ -48,7 +48,7 @@ public final class MappingStage extends MapReduceStage implements
 	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
 		mapper.map(pay.key, pay.value, this);
-		dispatchTo(x.src, PartitioningStage.app_id, new MapDone(pay.key));
+		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.key));
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import bamboo.dht.Dht.GetResp;
 import java.math.BigInteger;
 
 import c2c.payloads.KeyValue;
-import c2c.payloads.ReducerInput;
+import c2c.payloads.KeyPayload;
 
 public final class ReducingStage extends MapReduceStage implements
 		OutputCollector {
@@ -20,7 +20,7 @@ public final class ReducingStage extends MapReduceStage implements
 	private Reducer reducer;
 
 	public ReducingStage() throws Exception {
-		super(ReducerInput.class, Dht.GetResp.class);
+		super(KeyPayload.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
 	}
 
@@ -35,7 +35,7 @@ public final class ReducingStage extends MapReduceStage implements
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
-			ReducerInput payload = (ReducerInput) deliver.payload;
+			KeyPayload payload = (KeyPayload) deliver.payload;
 			requestGet(payload.key);
 		} else if (item instanceof Dht.GetResp) {
 			Dht.GetResp resp = (GetResp) item;

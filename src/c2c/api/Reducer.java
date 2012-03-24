@@ -4,7 +4,7 @@ package c2c.api;
  * Reduces a set of intermediate values which share a key to a smaller set of
  * values.
  * 
- * @author Cakeb Perkins
+ * @author Caleb Perkins
  * 
  */
 public interface Reducer {

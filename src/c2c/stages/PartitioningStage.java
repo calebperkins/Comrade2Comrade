@@ -20,9 +20,9 @@ public final class PartitioningStage extends MapReduceStage {
 	private int received = 0;
 
 	public PartitioningStage() throws Exception {
-		super(ReducerInput.class, MappingUnderway.class, Dht.GetResp.class);
+		super(KeyPayload.class, MappingUnderway.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
-		ostore.util.TypeTable.register_type(MapDone.class);
+		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public final class PartitioningStage extends MapReduceStage {
 			Iterable<String> keys = parseGetResp((Dht.GetResp) item);
 			for (String key : keys) {
 				dispatchTo(nodeFromKey(key), ReducingStage.app_id,
-						new ReducerInput(key));
+						new KeyPayload(key));
 			}
 		} else {
 			BUG("Event unknown");
