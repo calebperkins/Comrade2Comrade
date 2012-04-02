@@ -30,7 +30,7 @@ public final class PartitioningStage extends MapReduceStage {
 		if (item instanceof BambooRouteDeliver) {
 			received++;
 			if (expected == received) { // Mapping is done. Start reducing.
-				requestGet("intermediate-keys");
+				dispatchGet("intermediate-keys");
 			}
 		} else if (item instanceof MappingUnderway) {
 			expected = ((MappingUnderway) item).expected;

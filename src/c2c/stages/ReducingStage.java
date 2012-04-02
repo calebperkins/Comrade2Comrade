@@ -36,7 +36,7 @@ public final class ReducingStage extends MapReduceStage implements
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
 			KeyPayload payload = (KeyPayload) deliver.payload;
-			requestGet(payload.key);
+			dispatchGet(payload.key);
 		} else if (item instanceof Dht.GetResp) {
 			Dht.GetResp resp = (GetResp) item;
 			reducer.reduce((String) resp.user_data, parseGetResp(resp), this);

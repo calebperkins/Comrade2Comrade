@@ -79,8 +79,8 @@ public abstract class MapReduceStage extends StandardStage {
 					my_sink));
 		} else if (item instanceof BambooRouterAppRegResp) {
 			initialized = true;
-			while (!pending_events.isEmpty())
-				handleOperationalEvent(pending_events.remove());
+			for (QueueElementIF event : pending_events)
+				handleOperationalEvent(event);
 		} else {
 			pending_events.add(item);
 		}
@@ -125,7 +125,7 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 
-	public void requestPut(String key, String value, boolean allow_duplicates) {
+	public void dispatchPut(String key, String value, boolean allow_duplicates) {
 		if (allow_duplicates) // dirty hack
 			value = rand.nextInt() + DELIMITER + value;
 		else
@@ -145,7 +145,7 @@ public abstract class MapReduceStage extends StandardStage {
 	 * 
 	 * @param key
 	 */
-	public void requestGet(String key) {
+	public void dispatchGet(String key) {
 		BigInteger k = nodeFromKey(key);
 		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, key,
 				my_node_id);

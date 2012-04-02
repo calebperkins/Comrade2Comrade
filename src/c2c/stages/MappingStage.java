@@ -58,8 +58,8 @@ public final class MappingStage extends MapReduceStage implements
 
 	@Override
 	public void collect(String key, String value) {
-		requestPut(key, value, true);
-		requestPut("intermediate-keys", key, false);
+		dispatchPut(key, value, true);
+		dispatchPut("intermediate-keys", key, false);
 	}
 
 }
