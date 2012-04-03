@@ -44,7 +44,7 @@ public final class MasterStage extends MapReduceStage {
 			logger.info("Results back: " + deliver.payload);
 		} else if (item instanceof JobRequest) { // Distribute jobs.
 			JobRequest req = (JobRequest) item;
-			dispatch(new MappingUnderway(req.pairs.size()));
+			dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 			for (KeyValue pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
 				dispatchTo(randomNode(), MappingStage.app_id,
@@ -59,7 +59,7 @@ public final class MasterStage extends MapReduceStage {
 	 * Word count request.
 	 */
 	private void sendTestJob() { // TODO: remove
-		JobRequest req = new JobRequest();
+		JobRequest req = new JobRequest("demos.WordCount");
 		req.add("bears.txt", "Bears enjoy mauling and walks in the park");
 		req.add("cats.txt", "Cats enjoy the park and they like cat nip too");
 		req.add("dogs.txt", "Dogs enjoy walks and being silly");

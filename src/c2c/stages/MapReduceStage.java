@@ -7,6 +7,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import c2c.payloads.KeyPayload;
+
 import ostore.util.QuickSerializable;
 
 import seda.sandStorm.api.QueueElementIF;
@@ -29,7 +31,7 @@ import bamboo.dht.Dht;
  */
 public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
-	private final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
+	protected final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
 	protected static final Random rand = new Random();
 	public static final Charset CHARSET = Charset.forName("UTF-8");
 	public static final String DELIMITER = ":";
@@ -125,12 +127,12 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 
-	public void dispatchPut(String key, String value, boolean allow_duplicates) {
+	public void dispatchPut(String domain, String key, String value, boolean allow_duplicates) {
 		if (allow_duplicates) // dirty hack
 			value = rand.nextInt() + DELIMITER + value;
 		else
 			value = "0" + DELIMITER + value;
-		BigInteger k = nodeFromKey(key);
+		BigInteger k = nodeFromKey(domain+key);
 		ByteBuffer v = ByteBuffer.wrap(value.getBytes(CHARSET));
 		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
 		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink, null,
@@ -145,9 +147,10 @@ public abstract class MapReduceStage extends StandardStage {
 	 * 
 	 * @param key
 	 */
-	public void dispatchGet(String key) {
-		BigInteger k = nodeFromKey(key);
-		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, key,
+	public void dispatchGet(String domain, String key) {
+		BigInteger k = nodeFromKey(domain+key);
+		KeyPayload kp = new KeyPayload(domain, key);
+		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, kp,
 				my_node_id);
 		dispatch(req);
 	}

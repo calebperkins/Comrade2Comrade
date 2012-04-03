@@ -7,17 +7,18 @@ import bamboo.dht.Dht;
 import bamboo.dht.Dht.GetResp;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import c2c.payloads.KeyValue;
 import c2c.payloads.KeyPayload;
 
-public final class ReducingStage extends MapReduceStage implements
-		OutputCollector {
+public final class ReducingStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(ReducingStage.class);
 	private final ClassLoader classLoader = ReducingStage.class
 			.getClassLoader();
-	private Reducer reducer;
+	private Map<String, Reducer> reducers = new HashMap<String, Reducer>();
 
 	public ReducingStage() throws Exception {
 		super(KeyPayload.class, Dht.GetResp.class);
@@ -25,21 +26,23 @@ public final class ReducingStage extends MapReduceStage implements
 	}
 
 	@Override
-	public void init(ConfigDataIF config) throws Exception {
-		super.init(config);
-		String reducer_name = config_get_string(config, "reducer");
-		reducer = (Reducer) classLoader.loadClass(reducer_name).newInstance();
-	}
-
-	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
 			KeyPayload payload = (KeyPayload) deliver.payload;
-			dispatchGet(payload.key);
+			dispatchGet(payload.domain, payload.key);
+			if (!reducers.containsKey(payload.domain)) {
+				try {
+					Reducer r = (Reducer) classLoader.loadClass(payload.domain).newInstance();
+					reducers.put(payload.domain, r);
+				} catch (Exception e) {
+					BUG(e);
+				}
+			}
 		} else if (item instanceof Dht.GetResp) {
 			Dht.GetResp resp = (GetResp) item;
-			reducer.reduce((String) resp.user_data, parseGetResp(resp), this);
+			KeyPayload k = (KeyPayload) resp.user_data;
+			reducers.get(k.domain).reduce(k.key, parseGetResp(resp), new Collector(k.domain));
 		} else {
 			BUG("Unexpected event:" + item);
 		}
@@ -49,10 +52,19 @@ public final class ReducingStage extends MapReduceStage implements
 	public long getAppID() {
 		return app_id;
 	}
-
-	@Override
-	public void collect(String key, String value) {
-		KeyValue p = new KeyValue(key, value);
-		dispatchTo(BigInteger.ZERO, MasterStage.app_id, p);
+	
+	private class Collector implements OutputCollector {
+		private String domain;
+		
+		public Collector(String domain) {
+			this.domain = domain;
+		}
+		
+		@Override
+		public void collect(String key, String value) {
+			KeyValue p = new KeyValue(domain, key, value);
+			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p);
+		}
 	}
+	
 }

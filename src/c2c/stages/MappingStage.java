@@ -1,6 +1,9 @@
 package c2c.stages;
 
+import java.util.HashMap;
+import java.util.Map;
 import c2c.api.*;
+import c2c.payloads.ClassPayload;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 
@@ -8,10 +11,9 @@ import seda.sandStorm.api.*;
 import bamboo.api.*;
 import bamboo.dht.Dht;
 
-public final class MappingStage extends MapReduceStage implements
-		OutputCollector {
+public final class MappingStage extends MapReduceStage {
+	private final Map<String, Mapper> mappers = new HashMap<String, Mapper>();
 	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
-	private Mapper mapper;
 
 	public static final long app_id = bamboo.router.Router
 			.app_id(MappingStage.class);
@@ -21,17 +23,33 @@ public final class MappingStage extends MapReduceStage implements
 	}
 
 	@Override
-	public void init(ConfigDataIF config) throws Exception {
-		super.init(config);
-		String mapper_name = config_get_string(config, "mapper");
-		mapper = (Mapper) classLoader.loadClass(mapper_name).newInstance();
-	}
-
-	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) { // do the computation
 			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
-			map((KeyValue) deliver.payload, deliver);
+			if (deliver.payload instanceof KeyValue) {
+				KeyValue p = (KeyValue) deliver.payload;
+				if (!mappers.containsKey(p.domain)) {
+					try {
+						Mapper m = (Mapper) classLoader.loadClass(p.domain).newInstance();
+						mappers.put(p.domain, m);
+					} catch (Exception e) {
+						BUG(e);
+					}				
+				}
+				map(p, deliver);
+			} else if (deliver.payload instanceof ClassPayload) {
+				ClassPayload p = (ClassPayload) deliver.payload;
+				try {
+					mappers.put(p.name, (Mapper) p.toClass().newInstance());
+					
+					for (QueueElementIF event : pending_events) {
+						handleOperationalEvent(event);
+					}
+				} catch (Exception e) {
+					BUG(e);
+				}
+			}
+			
 		} else if (item instanceof Dht.PutResp) {
 			// TODO check response
 		} else {
@@ -47,19 +65,27 @@ public final class MappingStage extends MapReduceStage implements
 	 */
 	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
-		mapper.map(pay.key, pay.value, this);
-		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.key));
+		mappers.get(pay.domain).map(pay.key, pay.value, new Collector(pay.domain));
+		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.domain, pay.key));
 	}
 
 	@Override
 	public long getAppID() {
 		return app_id;
 	}
-
-	@Override
-	public void collect(String key, String value) {
-		dispatchPut(key, value, true);
-		dispatchPut("intermediate-keys", key, false);
-	}
+	
+	private class Collector implements OutputCollector {
+		private String domain;
+		
+		public Collector(String domain) {
+			this.domain = domain;
+		}
+		
+		@Override
+		public void collect(String key, String value) {
+			dispatchPut(domain, key, value, true);
+			dispatchPut(domain, "i", key, false);
+		}
+	}	
 
 }

@@ -1,5 +1,8 @@
 package c2c.stages;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import c2c.payloads.*;
 import c2c.events.*;
 
@@ -16,8 +19,7 @@ import bamboo.dht.Dht;
 public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
-	private int expected = 0;
-	private int received = 0;
+	private final Map<String, Integer> remaining = new HashMap<String, Integer>();
 
 	public PartitioningStage() throws Exception {
 		super(KeyPayload.class, MappingUnderway.class, Dht.GetResp.class);
@@ -28,17 +30,23 @@ public final class PartitioningStage extends MapReduceStage {
 	@Override
 	protected void handleOperationalEvent(QueueElementIF item) {
 		if (item instanceof BambooRouteDeliver) {
-			received++;
-			if (expected == received) { // Mapping is done. Start reducing.
-				dispatchGet("intermediate-keys");
+			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) item).payload;
+			int remain = remaining.get(k.domain);
+			remain--;
+			remaining.put(k.domain, remain);
+			if (remain == 0) { // Mapping is done. Start reducing.
+				dispatchGet(k.domain, "i");
 			}
 		} else if (item instanceof MappingUnderway) {
-			expected = ((MappingUnderway) item).expected;
+			MappingUnderway event = (MappingUnderway) item;
+			remaining.put(event.domain, event.expected);
 		} else if (item instanceof Dht.GetResp) {
-			Iterable<String> keys = parseGetResp((Dht.GetResp) item);
-			for (String key : keys) {
+			Dht.GetResp resp = (Dht.GetResp) item;
+			KeyPayload kp = (KeyPayload) resp.user_data;
+			logger.info(kp + " has " + resp.values.size() + " values.");
+			for (String key : parseGetResp(resp)) {
 				dispatchTo(nodeFromKey(key), ReducingStage.app_id,
-						new KeyPayload(key));
+						new KeyPayload(kp.domain, key));
 			}
 		} else {
 			BUG("Event unknown");

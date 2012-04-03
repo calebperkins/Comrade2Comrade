@@ -14,8 +14,13 @@ import c2c.payloads.KeyValue;
  */
 public class JobRequest implements QueueElementIF {
 	public final Set<KeyValue> pairs = new HashSet<KeyValue>();
+	public final String domain;
+	
+	public JobRequest(String class_name) {
+		this.domain = class_name;
+	}
 
 	public void add(String key, String value) {
-		pairs.add(new KeyValue(key, value));
+		pairs.add(new KeyValue(domain, key, value));
 	}
 }
