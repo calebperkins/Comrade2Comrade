@@ -27,7 +27,7 @@ public final class MasterStage extends MapReduceStage {
 	}
 
 	public MasterStage() throws Exception {
-		super(KeyValue.class, JobRequest.class);
+		super(KeyValue.class, JobRequest.class, CodeRequest.class);
 	}
 
 	@Override
@@ -50,6 +50,8 @@ public final class MasterStage extends MapReduceStage {
 				dispatchTo(randomNode(), MappingStage.app_id,
 						pair);
 			}
+		} else if (item instanceof CodeRequest) {
+			// TODO
 		} else {
 			BUG("Event " + item + " unknown.");
 		}

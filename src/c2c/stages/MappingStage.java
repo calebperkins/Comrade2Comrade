@@ -3,6 +3,7 @@ package c2c.stages;
 import java.util.HashMap;
 import java.util.Map;
 import c2c.api.*;
+import c2c.events.CodeRequest;
 import c2c.payloads.ClassPayload;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
@@ -32,6 +33,8 @@ public final class MappingStage extends MapReduceStage {
 					try {
 						Mapper m = (Mapper) classLoader.loadClass(p.domain).newInstance();
 						mappers.put(p.domain, m);
+					} catch (ClassNotFoundException e) { // ask sender for class code
+						dispatch(new CodeRequest(deliver.immediate_src));
 					} catch (Exception e) {
 						BUG(e);
 					}				
