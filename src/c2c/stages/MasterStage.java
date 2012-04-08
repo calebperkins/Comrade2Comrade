@@ -38,22 +38,22 @@ public final class MasterStage extends MapReduceStage {
 	}
 
 	@Override
-	protected void handleOperationalEvent(QueueElementIF item) {
-		if (item instanceof BambooRouteDeliver) { // get back the results
-			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
+	protected void handleOperationalEvent(QueueElementIF event) {
+		if (event instanceof BambooRouteDeliver) { // get back the results
+			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			logger.info("Results back: " + deliver.payload);
-		} else if (item instanceof JobRequest) { // Distribute jobs.
-			JobRequest req = (JobRequest) item;
+		} else if (event instanceof JobRequest) { // Distribute jobs.
+			JobRequest req = (JobRequest) event;
 			dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 			for (KeyValue pair : req.pairs) {
 				// Distribute randomly. TODO: better algorithm
 				dispatchTo(randomNode(), MappingStage.app_id,
 						pair);
 			}
-		} else if (item instanceof CodeRequest) {
+		} else if (event instanceof CodeRequest) {
 			// TODO
 		} else {
-			BUG("Event " + item + " unknown.");
+			BUG("Event " + event + " unknown.");
 		}
 	}
 

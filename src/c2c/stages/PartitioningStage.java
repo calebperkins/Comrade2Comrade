@@ -29,20 +29,20 @@ public final class PartitioningStage extends MapReduceStage {
 	}
 
 	@Override
-	protected void handleOperationalEvent(QueueElementIF item) {
-		if (item instanceof BambooRouteDeliver) {
-			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) item).payload;
+	protected void handleOperationalEvent(QueueElementIF event) {
+		if (event instanceof BambooRouteDeliver) {
+			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) event).payload;
 			int remain = remaining.get(k.domain);
 			remain--;
 			remaining.put(k.domain, remain);
 			if (remain == 0) { // Mapping is done. Start reducing.
 				dispatchGet(k.domain, "i");
 			}
-		} else if (item instanceof MappingUnderway) {
-			MappingUnderway event = (MappingUnderway) item;
-			remaining.put(event.domain, event.expected);
-		} else if (item instanceof Dht.GetResp) {
-			Dht.GetResp resp = (Dht.GetResp) item;
+		} else if (event instanceof MappingUnderway) {
+			MappingUnderway mapping = (MappingUnderway) event;
+			remaining.put(mapping.domain, mapping.expected);
+		} else if (event instanceof Dht.GetResp) {
+			Dht.GetResp resp = (Dht.GetResp) event;
 			KeyPayload kp = (KeyPayload) resp.user_data;
 			logger.info(kp + " has " + resp.values.size() + " values.");
 			for (String key : new DhtValues(resp)) {

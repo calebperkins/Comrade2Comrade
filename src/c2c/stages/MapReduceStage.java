@@ -99,10 +99,10 @@ public abstract class MapReduceStage extends StandardStage {
 	/**
 	 * Handles all events post-initialization.
 	 * 
-	 * @param item
+	 * @param event
 	 *            the event to process
 	 */
-	protected abstract void handleOperationalEvent(QueueElementIF item);
+	protected abstract void handleOperationalEvent(QueueElementIF event);
 
 	/**
 	 * Get a random node ID

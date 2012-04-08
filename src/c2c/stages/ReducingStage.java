@@ -28,9 +28,9 @@ public final class ReducingStage extends MapReduceStage {
 	}
 
 	@Override
-	protected void handleOperationalEvent(QueueElementIF item) {
-		if (item instanceof BambooRouteDeliver) {
-			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
+	protected void handleOperationalEvent(QueueElementIF event) {
+		if (event instanceof BambooRouteDeliver) {
+			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			KeyPayload payload = (KeyPayload) deliver.payload;
 			dispatchGet(payload.domain, payload.key);
 			if (!reducers.containsKey(payload.domain)) {
@@ -41,21 +41,21 @@ public final class ReducingStage extends MapReduceStage {
 					BUG(e);
 				}
 			}
-		} else if (item instanceof Dht.GetResp) {
-			Dht.GetResp resp = (GetResp) item;
+		} else if (event instanceof Dht.GetResp) {
+			Dht.GetResp resp = (GetResp) event;
 			KeyPayload k = (KeyPayload) resp.user_data;
 			if (responses.containsKey(k)) {
 				responses.get(k).append(resp);
 			} else {
 				responses.put(k, new DhtValues(resp));
 			}
-			if (responses.get(k).hasNext()) {
+			if (responses.get(k).hasMore()) {
 				dispatchGet(k.domain, k.key, resp.placemark);
 			} else {
 				reducers.get(k.domain).reduce(k.key, responses.get(k), new Collector(k.domain));
 			}
 		} else {
-			BUG("Unexpected event:" + item);
+			BUG("Unexpected event:" + event);
 		}
 	}
 

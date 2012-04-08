@@ -69,7 +69,7 @@ public class DhtValues implements Iterable<String> {
 		placemark = resp.placemark;
 	}
 	
-	public boolean hasNext() {
+	public boolean hasMore() {
 		return !placemark.equals(StorageManager.ZERO_KEY); 
 	}
 	

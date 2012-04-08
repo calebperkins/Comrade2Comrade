@@ -25,9 +25,9 @@ public final class MappingStage extends MapReduceStage {
 	}
 
 	@Override
-	protected void handleOperationalEvent(QueueElementIF item) {
-		if (item instanceof BambooRouteDeliver) { // do the computation
-			BambooRouteDeliver deliver = (BambooRouteDeliver) item;
+	protected void handleOperationalEvent(QueueElementIF event) {
+		if (event instanceof BambooRouteDeliver) { // do the computation
+			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			if (deliver.payload instanceof KeyValue) {
 				KeyValue p = (KeyValue) deliver.payload;
 				if (!mappers.containsKey(p.domain)) {
@@ -46,20 +46,20 @@ public final class MappingStage extends MapReduceStage {
 				try {
 					mappers.put(p.name, (Mapper) p.toClass().newInstance());
 					
-					for (QueueElementIF event : pending_events) {
-						handleOperationalEvent(event);
+					for (QueueElementIF e : pending_events) {
+						handleOperationalEvent(e);
 					}
 				} catch (Exception e) {
 					BUG(e);
 				}
 			}
 			
-		} else if (item instanceof Dht.PutResp) {
-			PutResp resp = (PutResp) item;
+		} else if (event instanceof Dht.PutResp) {
+			PutResp resp = (PutResp) event;
 			if (resp.result != 0) // TODO better handling
 				BUG("Put was unsuccessful.");
 		} else {
-			BUG("Event " + item + " unknown.");
+			BUG("Event " + event + " unknown.");
 		}
 	}
 
