@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 import c2c.stages.MapReduceStage;
 
+import bamboo.db.StorageManager;
 import bamboo.dht.Dht;
 
 /**
@@ -20,6 +21,7 @@ import bamboo.dht.Dht;
 public class DhtValues implements Iterable<String> {
 	private static final CharsetDecoder decoder = MapReduceStage.CHARSET.newDecoder();
 	private LinkedList<Dht.GetValue> values;
+	private StorageManager.Key placemark;
 
 	private class GetRespIterator implements Iterator<String> {
 		private Iterator<Dht.GetValue> raw = values.iterator();
@@ -51,9 +53,28 @@ public class DhtValues implements Iterable<String> {
 
 	}
 
+	
 	@SuppressWarnings("unchecked")
 	public DhtValues(Dht.GetResp resp) {
 		values = resp.values;
+		placemark = resp.placemark;
+	}
+	
+	public void append(Dht.GetResp resp) {
+		@SuppressWarnings("unchecked")
+		LinkedList<Dht.GetValue> x = resp.values;
+		
+		values.addAll(x);
+		
+		placemark = resp.placemark;
+	}
+	
+	public boolean hasNext() {
+		return !placemark.equals(StorageManager.ZERO_KEY); 
+	}
+	
+	public StorageManager.Key getPlacemark() {
+		return placemark;
 	}
 
 	@Override

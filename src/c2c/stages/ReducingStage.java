@@ -12,6 +12,7 @@ import java.util.Map;
 
 import c2c.payloads.KeyValue;
 import c2c.payloads.KeyPayload;
+import c2c.utilities.DhtValues;
 
 public final class ReducingStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
@@ -19,6 +20,7 @@ public final class ReducingStage extends MapReduceStage {
 	private final ClassLoader classLoader = ReducingStage.class
 			.getClassLoader();
 	private Map<String, Reducer> reducers = new HashMap<String, Reducer>();
+	private Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
 
 	public ReducingStage() throws Exception {
 		super(KeyPayload.class, Dht.GetResp.class);
@@ -42,7 +44,16 @@ public final class ReducingStage extends MapReduceStage {
 		} else if (item instanceof Dht.GetResp) {
 			Dht.GetResp resp = (GetResp) item;
 			KeyPayload k = (KeyPayload) resp.user_data;
-			reducers.get(k.domain).reduce(k.key, parseGetResp(resp), new Collector(k.domain));
+			if (responses.containsKey(k)) {
+				responses.get(k).append(resp);
+			} else {
+				responses.put(k, new DhtValues(resp));
+			}
+			if (responses.get(k).hasNext()) {
+				dispatchGet(k.domain, k.key, resp.placemark);
+			} else {
+				reducers.get(k.domain).reduce(k.key, responses.get(k), new Collector(k.domain));
+			}
 		} else {
 			BUG("Unexpected event:" + item);
 		}

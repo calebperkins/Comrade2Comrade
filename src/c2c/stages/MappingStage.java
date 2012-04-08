@@ -11,6 +11,7 @@ import c2c.payloads.KeyValue;
 import seda.sandStorm.api.*;
 import bamboo.api.*;
 import bamboo.dht.Dht;
+import bamboo.dht.Dht.PutResp;
 
 public final class MappingStage extends MapReduceStage {
 	private final Map<String, Mapper> mappers = new HashMap<String, Mapper>();
@@ -54,7 +55,9 @@ public final class MappingStage extends MapReduceStage {
 			}
 			
 		} else if (item instanceof Dht.PutResp) {
-			// TODO check response
+			PutResp resp = (PutResp) item;
+			if (resp.result != 0) // TODO better handling
+				BUG("Put was unsuccessful.");
 		} else {
 			BUG("Event " + item + " unknown.");
 		}

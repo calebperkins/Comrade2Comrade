@@ -19,6 +19,7 @@ import bamboo.api.BambooRouterAppRegReq;
 import bamboo.api.BambooRouterAppRegResp;
 import bamboo.util.StandardStage;
 
+import bamboo.db.StorageManager;
 import bamboo.dht.Dht;
 
 /**
@@ -134,6 +135,8 @@ public abstract class MapReduceStage extends StandardStage {
 			value = "0" + DELIMITER + value;
 		BigInteger k = nodeFromKey(domain+key);
 		ByteBuffer v = ByteBuffer.wrap(value.getBytes(CHARSET));
+		if (v.capacity() > 1024)
+			BUG("Value cannot be larger than 1024 bytes. Value was " + v.capacity() + " bytes.");
 		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
 		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink, null,
 				Dht.MAX_TTL_SEC, my_node_id.address());
@@ -148,9 +151,13 @@ public abstract class MapReduceStage extends StandardStage {
 	 * @param key
 	 */
 	public void dispatchGet(String domain, String key) {
+		dispatchGet(domain, key, null);
+	}
+	
+	public void dispatchGet(String domain, String key, StorageManager.Key placemark) {
 		BigInteger k = nodeFromKey(domain+key);
 		KeyPayload kp = new KeyPayload(domain, key);
-		Dht.GetReq req = new Dht.GetReq(k, 1000, true, null, my_sink, kp,
+		Dht.GetReq req = new Dht.GetReq(k, 999999, true, placemark, my_sink, kp,
 				my_node_id);
 		dispatch(req);
 	}
@@ -159,7 +166,4 @@ public abstract class MapReduceStage extends StandardStage {
 		return new BigInteger(key.getBytes(CHARSET));
 	}
 
-	public Iterable<String> parseGetResp(Dht.GetResp resp) {
-		return new c2c.utilities.DhtValues(resp);
-	}
 }

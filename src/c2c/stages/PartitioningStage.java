@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import c2c.payloads.*;
+import c2c.utilities.DhtValues;
 import c2c.events.*;
 
 import seda.sandStorm.api.*;
@@ -44,7 +45,7 @@ public final class PartitioningStage extends MapReduceStage {
 			Dht.GetResp resp = (Dht.GetResp) item;
 			KeyPayload kp = (KeyPayload) resp.user_data;
 			logger.info(kp + " has " + resp.values.size() + " values.");
-			for (String key : parseGetResp(resp)) {
+			for (String key : new DhtValues(resp)) {
 				dispatchTo(nodeFromKey(key), ReducingStage.app_id,
 						new KeyPayload(kp.domain, key));
 			}
