@@ -2,12 +2,11 @@ package c2c.utilities;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import c2c.payloads.KeyPayload;
-import c2c.stages.MapReduceStage;
+import c2c.payloads.Value;
 
 import bamboo.db.StorageManager;
 import bamboo.dht.Dht;
@@ -20,7 +19,6 @@ import bamboo.dht.Dht;
  * 
  */
 public class DhtValues implements Iterable<String> {
-	private static final CharsetDecoder decoder = MapReduceStage.CHARSET.newDecoder();
 	private LinkedList<Dht.GetValue> values;
 	private StorageManager.Key placemark;
 	private KeyPayload key;
@@ -37,10 +35,7 @@ public class DhtValues implements Iterable<String> {
 		public String next() {
 			ByteBuffer buffer = raw.next().value;
 			try {
-				String data = decoder.decode(buffer).toString();
-
-				// dirty hack to allow duplicates
-				return data.split(c2c.stages.MapReduceStage.DELIMITER, 2)[1];
+				return new Value(buffer).value;
 			} catch (CharacterCodingException e) {
 				// TODO handle this better. Should be a fatal error?
 				System.err.println(e);

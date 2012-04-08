@@ -1,8 +1,6 @@
 package c2c.stages;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
@@ -10,6 +8,7 @@ import java.util.Queue;
 import java.util.Random;
 
 import c2c.payloads.KeyPayload;
+import c2c.payloads.Value;
 
 import ostore.util.QuickSerializable;
 
@@ -36,8 +35,6 @@ public abstract class MapReduceStage extends StandardStage {
 	private boolean initialized = false;
 	protected final Queue<QueueElementIF> pending_events = new LinkedList<QueueElementIF>();
 	protected static final Random rand = new Random();
-	public static final Charset CHARSET = Charset.forName("UTF-8");
-	public static final String DELIMITER = ":";
 
 	/**
 	 * Register a stage with one payload and zero or more events.
@@ -132,18 +129,10 @@ public abstract class MapReduceStage extends StandardStage {
 
 	public void dispatchPut(String domain, String key, String value,
 			boolean allow_duplicates) {
-		if (allow_duplicates) // dirty hack
-			value = rand.nextInt() + DELIMITER + value;
-		else
-			value = "0" + DELIMITER + value;
 		BigInteger k = nodeFromKey(domain, key);
-		ByteBuffer v = ByteBuffer.wrap(value.getBytes(CHARSET));
-		if (v.capacity() > 1024)
-			BUG("Value cannot be larger than 1024 bytes. Value was "
-					+ v.capacity() + " bytes.");
-		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
-		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink,
-				new KeyPayload(domain, key), Dht.MAX_TTL_SEC,
+		Value val = new Value(value, allow_duplicates);
+		Dht.PutReq req = new Dht.PutReq(k, val.toByteBuffer(), val.hash(),
+				true, my_sink, new KeyPayload(domain, key), Dht.MAX_TTL_SEC,
 				my_node_id.address());
 		dispatch(req);
 	}
@@ -170,6 +159,7 @@ public abstract class MapReduceStage extends StandardStage {
 
 	/**
 	 * Computes SHA-1 of domain and key and converts to a 20 byte integer.
+	 * 
 	 * @param domain
 	 * @param key
 	 * @return the key for use in the DHT
@@ -178,7 +168,7 @@ public abstract class MapReduceStage extends StandardStage {
 		try {
 			MessageDigest cript = MessageDigest.getInstance("SHA-1");
 			cript.reset();
-			cript.update((domain + key).getBytes(CHARSET));
+			cript.update((domain + key).getBytes(Value.CHARSET));
 			return new BigInteger(cript.digest());
 		} catch (NoSuchAlgorithmException e) {
 			return BigInteger.ZERO;
