@@ -1,8 +1,6 @@
 package c2c.stages;
 
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -129,10 +127,10 @@ public abstract class MapReduceStage extends StandardStage {
 
 	public void dispatchPut(String domain, String key, String value,
 			boolean allow_duplicates) {
-		BigInteger k = nodeFromKey(domain, key);
+		KeyPayload kp = new KeyPayload(domain, key);
 		Value val = new Value(value, allow_duplicates);
-		Dht.PutReq req = new Dht.PutReq(k, val.toByteBuffer(), val.hash(),
-				true, my_sink, new KeyPayload(domain, key), Dht.MAX_TTL_SEC,
+		Dht.PutReq req = new Dht.PutReq(kp.toNode(), val.toByteBuffer(),
+				val.hash(), true, my_sink, kp, Dht.MAX_TTL_SEC,
 				my_node_id.address());
 		dispatch(req);
 	}
@@ -150,29 +148,10 @@ public abstract class MapReduceStage extends StandardStage {
 
 	public void dispatchGet(String domain, String key,
 			StorageManager.Key placemark) {
-		BigInteger k = nodeFromKey(domain, key);
 		KeyPayload kp = new KeyPayload(domain, key);
-		Dht.GetReq req = new Dht.GetReq(k, 999999, true, placemark, my_sink,
-				kp, my_node_id);
+		Dht.GetReq req = new Dht.GetReq(kp.toNode(), 999999, true, placemark,
+				my_sink, kp, my_node_id);
 		dispatch(req);
-	}
-
-	/**
-	 * Computes SHA-1 of domain and key and converts to a 20 byte integer.
-	 * 
-	 * @param domain
-	 * @param key
-	 * @return the key for use in the DHT
-	 */
-	public BigInteger nodeFromKey(String domain, String key) {
-		try {
-			MessageDigest cript = MessageDigest.getInstance("SHA-1");
-			cript.reset();
-			cript.update((domain + key).getBytes(Value.CHARSET));
-			return new BigInteger(cript.digest());
-		} catch (NoSuchAlgorithmException e) {
-			return BigInteger.ZERO;
-		}
 	}
 
 }

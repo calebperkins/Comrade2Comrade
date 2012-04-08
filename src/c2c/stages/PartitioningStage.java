@@ -46,8 +46,8 @@ public final class PartitioningStage extends MapReduceStage {
 			KeyPayload kp = (KeyPayload) resp.user_data;
 			logger.info(kp + " has " + resp.values.size() + " values.");
 			for (String key : new DhtValues(resp)) {
-				dispatchTo(nodeFromKey(kp.domain, key), ReducingStage.app_id,
-						new KeyPayload(kp.domain, key));
+				dispatchTo(kp.toNode(), ReducingStage.app_id, new KeyPayload(
+						kp.domain, key));
 			}
 		} else {
 			BUG("Event unknown");

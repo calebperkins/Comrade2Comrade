@@ -1,5 +1,9 @@
 package c2c.payloads;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import ostore.util.InputBuffer;
 import ostore.util.OutputBuffer;
 import ostore.util.QuickSerializable;
@@ -22,6 +26,17 @@ public class KeyPayload implements QuickSerializable {
 	public void serialize(OutputBuffer buf) {
 		buf.add(domain);
 		buf.add(key);
+	}
+	
+	public BigInteger toNode() {
+		try {
+			MessageDigest cript = MessageDigest.getInstance("SHA-1");
+			cript.reset();
+			cript.update((domain + key).getBytes(Value.CHARSET));
+			return new BigInteger(cript.digest());
+		} catch (NoSuchAlgorithmException e) {
+			return BigInteger.ZERO;
+		}
 	}
 
 	@Override

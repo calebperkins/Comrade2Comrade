@@ -51,4 +51,9 @@ public class Value implements QuickSerializable {
 		return ByteBuffer.wrap(s.getBytes(CHARSET));
 	}
 
+	@Override
+	public String toString() {
+		return value;
+	}
+
 }
