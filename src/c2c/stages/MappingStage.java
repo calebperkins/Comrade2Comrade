@@ -32,20 +32,22 @@ public final class MappingStage extends MapReduceStage {
 				KeyValue p = (KeyValue) deliver.payload;
 				if (!mappers.containsKey(p.domain)) {
 					try {
-						Mapper m = (Mapper) classLoader.loadClass(p.domain).newInstance();
+						Mapper m = (Mapper) classLoader.loadClass(p.domain)
+								.newInstance();
 						mappers.put(p.domain, m);
-					} catch (ClassNotFoundException e) { // ask sender for class code
+					} catch (ClassNotFoundException e) { // ask sender for class
+															// code
 						dispatch(new CodeRequest(deliver.immediate_src));
 					} catch (Exception e) {
 						BUG(e);
-					}				
+					}
 				}
 				map(p, deliver);
 			} else if (deliver.payload instanceof ClassPayload) {
 				ClassPayload p = (ClassPayload) deliver.payload;
 				try {
 					mappers.put(p.name, (Mapper) p.toClass().newInstance());
-					
+
 					for (QueueElementIF e : pending_events) {
 						handleOperationalEvent(e);
 					}
@@ -53,7 +55,7 @@ public final class MappingStage extends MapReduceStage {
 					BUG(e);
 				}
 			}
-			
+
 		} else if (event instanceof Dht.PutResp) {
 			PutResp resp = (PutResp) event;
 			if (resp.result != 0) // TODO better handling
@@ -71,27 +73,31 @@ public final class MappingStage extends MapReduceStage {
 	 */
 	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
-		mappers.get(pay.domain).map(pay.key, pay.value, new Collector(pay.domain));
-		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.domain, pay.key));
+		mappers.get(pay.domain).map(pay.key, pay.value,
+				new Collector(pay.domain));
+		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.domain,
+				pay.key));
 	}
 
 	@Override
 	public long getAppID() {
 		return app_id;
 	}
-	
+
 	private class Collector implements OutputCollector {
 		private String domain;
-		
+		private KeyPayload inter;
+
 		public Collector(String domain) {
 			this.domain = domain;
+			inter = new KeyPayload(domain, "i");
 		}
-		
+
 		@Override
 		public void collect(String key, String value) {
-			dispatchPut(domain, key, value, true);
-			dispatchPut(domain, "i", key, false);
+			dispatchPut(new KeyPayload(domain, key), value, true);
+			dispatchPut(inter, key, false);
 		}
-	}	
+	}
 
 }

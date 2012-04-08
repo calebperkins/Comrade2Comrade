@@ -8,7 +8,7 @@ import ostore.util.InputBuffer;
 import ostore.util.OutputBuffer;
 import ostore.util.QuickSerializable;
 
-public class KeyPayload implements QuickSerializable {
+public class KeyPayload implements QuickSerializable, Comparable<KeyPayload> {
 	public final String domain;
 	public final String key;
 
@@ -27,7 +27,7 @@ public class KeyPayload implements QuickSerializable {
 		buf.add(domain);
 		buf.add(key);
 	}
-	
+
 	public BigInteger toNode() {
 		try {
 			MessageDigest cript = MessageDigest.getInstance("SHA-1");
@@ -42,6 +42,15 @@ public class KeyPayload implements QuickSerializable {
 	@Override
 	public String toString() {
 		return domain + "/" + key;
+	}
+
+	@Override
+	public int compareTo(KeyPayload other) {
+		int d = domain.compareTo(other.domain);
+		if (d == 0) {
+			return key.compareTo(other.key);
+		}
+		return d;
 	}
 
 }

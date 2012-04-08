@@ -125,12 +125,11 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 
-	public void dispatchPut(String domain, String key, String value,
+	public void dispatchPut(KeyPayload key, String value,
 			boolean allow_duplicates) {
-		KeyPayload kp = new KeyPayload(domain, key);
 		Value val = new Value(value, allow_duplicates);
-		Dht.PutReq req = new Dht.PutReq(kp.toNode(), val.toByteBuffer(),
-				val.hash(), true, my_sink, kp, Dht.MAX_TTL_SEC,
+		Dht.PutReq req = new Dht.PutReq(key.toNode(), val.toByteBuffer(),
+				val.hash(), true, my_sink, key, Dht.MAX_TTL_SEC,
 				my_node_id.address());
 		dispatch(req);
 	}
