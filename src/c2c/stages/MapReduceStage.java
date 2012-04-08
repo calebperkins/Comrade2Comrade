@@ -140,15 +140,13 @@ public abstract class MapReduceStage extends StandardStage {
 	 * Dht.GetResp event. The key will be stored in the user_data attribute on
 	 * the response.
 	 * 
-	 * @param key
+	 * @param kp
 	 */
-	public void dispatchGet(String domain, String key) {
-		dispatchGet(domain, key, null);
+	public void dispatchGet(KeyPayload kp) {
+		dispatchGet(kp, null);
 	}
 
-	public void dispatchGet(String domain, String key,
-			StorageManager.Key placemark) {
-		KeyPayload kp = new KeyPayload(domain, key);
+	public void dispatchGet(KeyPayload kp, StorageManager.Key placemark) {
 		Dht.GetReq req = new Dht.GetReq(kp.toNode(), 999999, true, placemark,
 				my_sink, kp, my_node_id);
 		dispatch(req);

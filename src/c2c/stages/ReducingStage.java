@@ -32,7 +32,7 @@ public final class ReducingStage extends MapReduceStage {
 		if (event instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			KeyPayload payload = (KeyPayload) deliver.payload;
-			dispatchGet(payload.domain, payload.key);
+			dispatchGet(payload);
 			if (!reducers.containsKey(payload.domain)) {
 				try {
 					Reducer r = (Reducer) classLoader.loadClass(payload.domain).newInstance();
@@ -50,7 +50,7 @@ public final class ReducingStage extends MapReduceStage {
 				responses.put(k, new DhtValues(resp));
 			}
 			if (responses.get(k).hasMore()) {
-				dispatchGet(k.domain, k.key, resp.placemark);
+				dispatchGet(k, resp.placemark);
 			} else {
 				reducers.get(k.domain).reduce(responses.get(k).getKey(), responses.get(k), new Collector(k.domain));
 			}
