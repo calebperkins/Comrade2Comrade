@@ -52,7 +52,7 @@ public final class ReducingStage extends MapReduceStage {
 			if (responses.get(k).hasMore()) {
 				dispatchGet(k.domain, k.key, resp.placemark);
 			} else {
-				reducers.get(k.domain).reduce(k.key, responses.get(k), new Collector(k.domain));
+				reducers.get(k.domain).reduce(responses.get(k).getKey(), responses.get(k), new Collector(k.domain));
 			}
 		} else {
 			BUG("Unexpected event:" + event);

@@ -6,6 +6,7 @@ import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import c2c.payloads.KeyPayload;
 import c2c.stages.MapReduceStage;
 
 import bamboo.db.StorageManager;
@@ -22,6 +23,7 @@ public class DhtValues implements Iterable<String> {
 	private static final CharsetDecoder decoder = MapReduceStage.CHARSET.newDecoder();
 	private LinkedList<Dht.GetValue> values;
 	private StorageManager.Key placemark;
+	private KeyPayload key;
 
 	private class GetRespIterator implements Iterator<String> {
 		private Iterator<Dht.GetValue> raw = values.iterator();
@@ -58,6 +60,7 @@ public class DhtValues implements Iterable<String> {
 	public DhtValues(Dht.GetResp resp) {
 		values = resp.values;
 		placemark = resp.placemark;
+		key = (KeyPayload) resp.user_data;
 	}
 	
 	public void append(Dht.GetResp resp) {
@@ -75,6 +78,10 @@ public class DhtValues implements Iterable<String> {
 	
 	public StorageManager.Key getPlacemark() {
 		return placemark;
+	}
+	
+	public String getKey() {
+		return key.key;
 	}
 
 	@Override

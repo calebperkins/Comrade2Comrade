@@ -3,6 +3,8 @@ package c2c.stages;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
@@ -128,18 +130,21 @@ public abstract class MapReduceStage extends StandardStage {
 		dispatch(new BambooRouteInit(dest, app_id, false, false, payload));
 	}
 
-	public void dispatchPut(String domain, String key, String value, boolean allow_duplicates) {
+	public void dispatchPut(String domain, String key, String value,
+			boolean allow_duplicates) {
 		if (allow_duplicates) // dirty hack
 			value = rand.nextInt() + DELIMITER + value;
 		else
 			value = "0" + DELIMITER + value;
-		BigInteger k = nodeFromKey(domain+key);
+		BigInteger k = nodeFromKey(domain, key);
 		ByteBuffer v = ByteBuffer.wrap(value.getBytes(CHARSET));
 		if (v.capacity() > 1024)
-			BUG("Value cannot be larger than 1024 bytes. Value was " + v.capacity() + " bytes.");
+			BUG("Value cannot be larger than 1024 bytes. Value was "
+					+ v.capacity() + " bytes.");
 		byte[] vh = BigInteger.valueOf(value.hashCode()).toByteArray();
-		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink, null,
-				Dht.MAX_TTL_SEC, my_node_id.address());
+		Dht.PutReq req = new Dht.PutReq(k, v, vh, true, my_sink,
+				new KeyPayload(domain, key), Dht.MAX_TTL_SEC,
+				my_node_id.address());
 		dispatch(req);
 	}
 
@@ -153,17 +158,31 @@ public abstract class MapReduceStage extends StandardStage {
 	public void dispatchGet(String domain, String key) {
 		dispatchGet(domain, key, null);
 	}
-	
-	public void dispatchGet(String domain, String key, StorageManager.Key placemark) {
-		BigInteger k = nodeFromKey(domain+key);
+
+	public void dispatchGet(String domain, String key,
+			StorageManager.Key placemark) {
+		BigInteger k = nodeFromKey(domain, key);
 		KeyPayload kp = new KeyPayload(domain, key);
-		Dht.GetReq req = new Dht.GetReq(k, 999999, true, placemark, my_sink, kp,
-				my_node_id);
+		Dht.GetReq req = new Dht.GetReq(k, 999999, true, placemark, my_sink,
+				kp, my_node_id);
 		dispatch(req);
 	}
 
-	public BigInteger nodeFromKey(String key) {
-		return new BigInteger(key.getBytes(CHARSET));
+	/**
+	 * Computes SHA-1 of domain and key and converts to a 20 byte integer.
+	 * @param domain
+	 * @param key
+	 * @return the key for use in the DHT
+	 */
+	public BigInteger nodeFromKey(String domain, String key) {
+		try {
+			MessageDigest cript = MessageDigest.getInstance("SHA-1");
+			cript.reset();
+			cript.update((domain + key).getBytes(CHARSET));
+			return new BigInteger(cript.digest());
+		} catch (NoSuchAlgorithmException e) {
+			return BigInteger.ZERO;
+		}
 	}
 
 }
