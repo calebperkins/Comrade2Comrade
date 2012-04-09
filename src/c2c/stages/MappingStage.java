@@ -30,11 +30,11 @@ public final class MappingStage extends MapReduceStage {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			if (deliver.payload instanceof KeyValue) {
 				KeyValue p = (KeyValue) deliver.payload;
-				if (!mappers.containsKey(p.domain)) {
+				if (!mappers.containsKey(p.key.domain)) {
 					try {
-						Mapper m = (Mapper) classLoader.loadClass(p.domain)
+						Mapper m = (Mapper) classLoader.loadClass(p.key.domain)
 								.newInstance();
-						mappers.put(p.domain, m);
+						mappers.put(p.key.domain, m);
 					} catch (ClassNotFoundException e) { // ask sender for class
 															// code
 						dispatch(new CodeRequest(deliver.immediate_src));
@@ -73,10 +73,9 @@ public final class MappingStage extends MapReduceStage {
 	 */
 	private void map(KeyValue pay, BambooRouteDeliver x) {
 		logger.info("Computing " + pay);
-		mappers.get(pay.domain).map(pay.key, pay.value,
-				new Collector(pay.domain));
-		dispatchTo(x.src, PartitioningStage.app_id, new KeyPayload(pay.domain,
-				pay.key));
+		mappers.get(pay.key.domain).map(pay.key.data, pay.value,
+				new Collector(pay.key.domain));
+		dispatchTo(x.src, PartitioningStage.app_id, pay.key);
 	}
 
 	@Override

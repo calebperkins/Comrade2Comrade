@@ -76,7 +76,7 @@ public class DhtValues implements Iterable<String> {
 	}
 	
 	public String getKey() {
-		return key.key;
+		return key.data;
 	}
 
 	@Override
