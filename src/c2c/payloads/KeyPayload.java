@@ -1,12 +1,11 @@
 package c2c.payloads;
 
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
+import bamboo.util.GuidTools;
 import ostore.util.InputBuffer;
 import ostore.util.OutputBuffer;
 import ostore.util.QuickSerializable;
+import ostore.util.SHA1Hash;
 
 public class KeyPayload implements QuickSerializable, Comparable<KeyPayload> {
 	public final String domain;
@@ -28,15 +27,12 @@ public class KeyPayload implements QuickSerializable, Comparable<KeyPayload> {
 		buf.add(data);
 	}
 
+	/**
+	 * Returns a 20-bit key suitable for use in the Bamboo DHT.
+	 * @return a DHT key
+	 */
 	public BigInteger toNode() {
-		try {
-			MessageDigest cript = MessageDigest.getInstance("SHA-1");
-			cript.reset();
-			cript.update((domain + data).getBytes(Value.CHARSET));
-			return new BigInteger(cript.digest());
-		} catch (NoSuchAlgorithmException e) {
-			return BigInteger.ZERO;
-		}
+		return GuidTools.secure_hash_to_big_integer(new SHA1Hash(this));
 	}
 
 	@Override
