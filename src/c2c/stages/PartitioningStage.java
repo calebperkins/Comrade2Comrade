@@ -36,7 +36,7 @@ public final class PartitioningStage extends MapReduceStage {
 			remain--;
 			remaining.put(k.domain, remain);
 			if (remain == 0) { // Mapping is done. Start reducing.
-				dispatchGet(new KeyPayload(k.domain, "i"), null);
+				dispatchGet(new KeyPayload(k.domain, "i"));
 			}
 		} else if (event instanceof MappingUnderway) {
 			MappingUnderway mapping = (MappingUnderway) event;
