@@ -42,12 +42,12 @@ public final class MasterStage extends MapReduceStage {
 		if (event instanceof BambooRouteDeliver) { // get back the results
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			logger.info("Results back: " + deliver.payload);
-		} else if (event instanceof JobRequest) { // Distribute jobs.
+		} else if (event instanceof JobRequest) { // Distribute jobs to mappers.
 			JobRequest req = (JobRequest) event;
 			dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 			for (KeyValue pair : req.pairs) {
-				// Distribute randomly. TODO: better algorithm
-				dispatchTo(randomNode(), MappingStage.app_id,
+				// Distribute to different nodes.
+				dispatchTo(pair.key.toNode(), MappingStage.app_id,
 						pair);
 			}
 		} else if (event instanceof CodeRequest) {

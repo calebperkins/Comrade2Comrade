@@ -150,5 +150,9 @@ public abstract class MapReduceStage extends StandardStage {
 				my_sink, kp, my_node_id);
 		dispatch(req);
 	}
+	
+	protected final KeyPayload intermediateKeys(String domain) {
+		return new KeyPayload(domain, domain + ":intermediate");
+	}
 
 }

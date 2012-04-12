@@ -59,7 +59,7 @@ public final class MappingStage extends MapReduceStage {
 		} else if (event instanceof Dht.PutResp) {
 			PutResp resp = (PutResp) event;
 			if (resp.result != 0) // TODO better handling
-				BUG("Put was unsuccessful.");
+				logger.error("Put was unsuccessful: " + resp);
 		} else {
 			BUG("Event " + event + " unknown.");
 		}
@@ -71,11 +71,11 @@ public final class MappingStage extends MapReduceStage {
 	 * @param pay
 	 * @param src
 	 */
-	private void map(KeyValue pay, BambooRouteDeliver x) {
+	private void map(KeyValue pay, BambooRouteDeliver msg) {
 		logger.info("Computing " + pay);
 		mappers.get(pay.key.domain).map(pay.key.data, pay.value,
 				new Collector(pay.key.domain));
-		dispatchTo(x.src, PartitioningStage.app_id, pay.key);
+		dispatchTo(msg.src, PartitioningStage.app_id, pay.key);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public final class MappingStage extends MapReduceStage {
 
 		public Collector(String domain) {
 			this.domain = domain;
-			inter = new KeyPayload(domain, "i");
+			inter = intermediateKeys(domain);
 		}
 
 		@Override
