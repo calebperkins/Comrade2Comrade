@@ -12,6 +12,7 @@ import seda.sandStorm.api.*;
 import bamboo.api.*;
 import bamboo.dht.Dht;
 import bamboo.dht.Dht.PutResp;
+import bamboo.dht.bamboo_stat;
 
 public final class MappingStage extends MapReduceStage {
 	private final Map<String, Mapper> mappers = new HashMap<String, Mapper>();
@@ -58,8 +59,8 @@ public final class MappingStage extends MapReduceStage {
 
 		} else if (event instanceof Dht.PutResp) {
 			PutResp resp = (PutResp) event;
-			if (resp.result != 0) // TODO better handling
-				logger.error("Put was unsuccessful: " + resp);
+			if (resp.result != bamboo_stat.BAMBOO_OK) // TODO better handling
+				BUG("Put was unsuccessful. System is overcapacity!");
 		} else {
 			BUG("Event " + event + " unknown.");
 		}

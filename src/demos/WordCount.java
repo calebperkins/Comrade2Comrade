@@ -18,9 +18,8 @@ public class WordCount implements Reducer, Mapper {
 	public void reduce(String key, Iterable<String> values,
 			OutputCollector collector) {
 		int count = 0;
-		for (@SuppressWarnings("unused")
-		String s : values) {
-			count++;
+		for (String s : values) {
+			count += Integer.parseInt(s);
 		}
 		collector.collect(key, String.valueOf(count));
 	}

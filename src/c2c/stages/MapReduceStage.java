@@ -129,7 +129,7 @@ public abstract class MapReduceStage extends StandardStage {
 			boolean allow_duplicates) {
 		Value val = new Value(value, allow_duplicates);
 		Dht.PutReq req = new Dht.PutReq(key.toNode(), val.toByteBuffer(),
-				val.hash(), true, my_sink, key, Dht.MAX_TTL_SEC,
+				val.hash(), true, my_sink, key, 600,
 				my_node_id.address());
 		dispatch(req);
 	}

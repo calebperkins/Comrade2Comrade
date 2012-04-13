@@ -39,11 +39,8 @@ public final class PartitioningStage extends MapReduceStage {
 		if (event instanceof BambooRouteDeliver) {
 			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) event).payload;
 			completed.get(k.domain).add(k.data);
-			if (completed.get(k.domain).size() == expected.get(k.domain)) { // Mapping
-																			// is
-																			// done.
-																			// Start
-																			// reducing.
+			// Mapping is done. Start reducing.
+			if (completed.get(k.domain).size() == expected.get(k.domain)) {
 				dispatchGet(intermediateKeys(k.domain));
 			}
 		} else if (event instanceof MappingUnderway) {
