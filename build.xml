@@ -47,5 +47,20 @@
 			</classpath>
 		</java>
 	</target>
+	
+	<target name="slave" description="Start a second client to connect to the gateway" depends="jar">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.MasterStage">
+			<sysproperty key="java.library.path" value="${lib}/linux" />
+		    <arg value="configs/slave.cfg"/>
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+				<fileset dir="${build}/dist">
+					<include name="c2c.jar" />
+				</fileset>
+			</classpath>
+		</java>
+	</target>
 </project>
 
