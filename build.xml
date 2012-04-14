@@ -22,7 +22,7 @@
 
 	<target name="jar" depends="compile" description="Make the JARs">
 		<mkdir dir="${build}/dist" />
-		<jar destfile="${build}/dist/c2c.jar" basedir="${build}">
+		<jar destfile="${build}/dist/c2c.jar" basedir="${build}" excludes="dist/c2c.jar">
 			<manifest>
 				<attribute name="Main-Class" value="c2c.stages.MasterStage" />
 			</manifest>
@@ -31,6 +31,21 @@
 
 	<target name="clean">
 		<delete dir="${build}" />
+	</target>
+	
+	<target name="gateway" description="Start a gateway." depends="jar">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.MasterStage">
+			<sysproperty key="java.library.path" value="${lib}/linux" />
+		    <arg value="configs/master.cfg"/>
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+				<fileset dir="${build}/dist">
+					<include name="c2c.jar" />
+				</fileset>
+			</classpath>
+		</java>
 	</target>
 </project>
 

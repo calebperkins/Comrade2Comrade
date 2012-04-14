@@ -1,7 +1,9 @@
 package c2c.stages;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
@@ -12,7 +14,8 @@ import bamboo.api.*;
 import bamboo.dht.Dht;
 
 /**
- * Waits until mappers are done and initiates reducing.
+ * Waits until mappers are done and initiates reducing. This stage runs on the
+ * same node as MasterStage!
  * 
  * @author Caleb Perkins
  * 
@@ -20,7 +23,10 @@ import bamboo.dht.Dht;
 public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
-	private final Map<String, Integer> remaining = new HashMap<String, Integer>();
+	private final Map<String, Integer> expected = new HashMap<String, Integer>();
+
+	// What mappers for an original input key have completed
+	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
 
 	public PartitioningStage() throws Exception {
 		super(KeyPayload.class, MappingUnderway.class, Dht.GetResp.class);
@@ -32,15 +38,15 @@ public final class PartitioningStage extends MapReduceStage {
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) {
 			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) event).payload;
-			int remain = remaining.get(k.domain);
-			remain--;
-			remaining.put(k.domain, remain);
-			if (remain == 0) { // Mapping is done. Start reducing.
-				dispatchGet(new KeyPayload(k.domain, "i"));
+			completed.get(k.domain).add(k.data);
+			// Mapping is done. Start reducing.
+			if (completed.get(k.domain).size() == expected.get(k.domain)) {
+				dispatchGet(intermediateKeys(k.domain));
 			}
 		} else if (event instanceof MappingUnderway) {
 			MappingUnderway mapping = (MappingUnderway) event;
-			remaining.put(mapping.domain, mapping.expected);
+			expected.put(mapping.domain, mapping.expected);
+			completed.put(mapping.domain, new HashSet<String>());
 		} else if (event instanceof Dht.GetResp) {
 			Dht.GetResp resp = (Dht.GetResp) event;
 			KeyPayload kp = (KeyPayload) resp.user_data;

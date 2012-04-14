@@ -129,7 +129,7 @@ public abstract class MapReduceStage extends StandardStage {
 			boolean allow_duplicates) {
 		Value val = new Value(value, allow_duplicates);
 		Dht.PutReq req = new Dht.PutReq(key.toNode(), val.toByteBuffer(),
-				val.hash(), true, my_sink, key, Dht.MAX_TTL_SEC,
+				val.hash(), true, my_sink, key, 600,
 				my_node_id.address());
 		dispatch(req);
 	}
@@ -149,6 +149,10 @@ public abstract class MapReduceStage extends StandardStage {
 		Dht.GetReq req = new Dht.GetReq(kp.toNode(), 999999, true, placemark,
 				my_sink, kp, my_node_id);
 		dispatch(req);
+	}
+	
+	protected final KeyPayload intermediateKeys(String domain) {
+		return new KeyPayload(domain, domain + ":intermediate");
 	}
 
 }

@@ -74,7 +74,7 @@ public final class ReducingStage extends MapReduceStage {
 		@Override
 		public void collect(String key, String value) {
 			KeyValue p = new KeyValue(domain, key, value);
-			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p);
+			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p); // FIXME wrong node ID
 		}
 	}
 	
