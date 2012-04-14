@@ -3,8 +3,6 @@ package c2c.stages;
 import java.util.HashMap;
 import java.util.Map;
 import c2c.api.*;
-import c2c.events.CodeRequest;
-import c2c.payloads.ClassPayload;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 
@@ -36,27 +34,14 @@ public final class MappingStage extends MapReduceStage {
 						Mapper m = (Mapper) classLoader.loadClass(p.key.domain)
 								.newInstance();
 						mappers.put(p.key.domain, m);
-					} catch (ClassNotFoundException e) { // ask sender for class
-															// code
-						dispatch(new CodeRequest(deliver.immediate_src));
 					} catch (Exception e) {
 						BUG(e);
 					}
 				}
 				map(p, deliver);
-			} else if (deliver.payload instanceof ClassPayload) {
-				ClassPayload p = (ClassPayload) deliver.payload;
-				try {
-					mappers.put(p.name, (Mapper) p.toClass().newInstance());
-
-					for (QueueElementIF e : pending_events) {
-						handleOperationalEvent(e);
-					}
-				} catch (Exception e) {
-					BUG(e);
-				}
+			} else {
+				BUG("Unknown");
 			}
-
 		} else if (event instanceof Dht.PutResp) {
 			PutResp resp = (PutResp) event;
 			if (resp.result != bamboo_stat.BAMBOO_OK) // TODO better handling

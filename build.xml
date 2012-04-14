@@ -24,7 +24,7 @@
 		<mkdir dir="${build}/dist" />
 		<jar destfile="${build}/dist/c2c.jar" basedir="${build}" excludes="dist/c2c.jar">
 			<manifest>
-				<attribute name="Main-Class" value="c2c.stages.MasterStage" />
+				<attribute name="Main-Class" value="c2c.stages.ClientStage" />
 			</manifest>
 		</jar>
 	</target>
@@ -33,32 +33,43 @@
 		<delete dir="${build}" />
 	</target>
 	
-	<target name="gateway" description="Start a gateway." depends="jar">
-		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.MasterStage">
+	<target name="gateway" description="Start a gateway." depends="compile">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${lib}/linux" />
 		    <arg value="configs/master.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
 				</fileset>
-				<fileset dir="${build}/dist">
-					<include name="c2c.jar" />
-				</fileset>
+				<path location="${build}" />
 			</classpath>
 		</java>
 	</target>
 	
-	<target name="slave" description="Start a second client to connect to the gateway" depends="jar">
-		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.MasterStage">
+	<target name="slave" description="Start a second client to connect to the gateway" depends="compile">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${lib}/linux" />
 		    <arg value="configs/slave.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
 				</fileset>
-				<fileset dir="${build}/dist">
-					<include name="c2c.jar" />
+				<path location="${build}" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="singletest" description="Start a test job on one node." depends="compile">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
+			<sysproperty key="java.library.path" value="${lib}/linux" />
+		    <arg value="configs/master.cfg"/>
+		    <arg value="demos.WordCount"/>
+		    <arg value="words.json"/>
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
 				</fileset>
+				<path location="${build}" />
 			</classpath>
 		</java>
 	</target>
