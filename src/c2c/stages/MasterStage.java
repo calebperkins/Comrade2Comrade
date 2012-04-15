@@ -1,6 +1,5 @@
 package c2c.stages;
 
-import ostore.network.NetworkMessage;
 import seda.sandStorm.api.QueueElementIF;
 
 import c2c.events.*;
@@ -35,9 +34,6 @@ public final class MasterStage extends MapReduceStage {
 				dispatchTo(pair.key.toNode(), MappingStage.app_id,
 						pair);
 			}
-		} else if (event instanceof NetworkMessage) {
-			NetworkMessage m = (NetworkMessage) event;
-			logger.fatal(m);
 		} else {
 			BUG("Event " + event + " unknown.");
 		}
