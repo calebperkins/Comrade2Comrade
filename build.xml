@@ -4,6 +4,7 @@
 	<property name="src" location="src" />
 	<property name="build" location="bin" />
 	<property name="lib" location="lib" />
+	<property name="syslib" location="lib/darwin" />
 
 	<target name="init" description="Initialize stuff">
 		<tstamp />
@@ -32,10 +33,10 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-	
+
 	<target name="gateway" description="Start a gateway." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
-			<sysproperty key="java.library.path" value="${lib}/linux" />
+			<sysproperty key="java.library.path" value="${syslib}" />
 		    <arg value="configs/master.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
@@ -45,10 +46,10 @@
 			</classpath>
 		</java>
 	</target>
-	
+
 	<target name="slave" description="Start a second client to connect to the gateway" depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
-			<sysproperty key="java.library.path" value="${lib}/linux" />
+			<sysproperty key="java.library.path" value="${syslib}" />
 		    <arg value="configs/slave.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
@@ -61,7 +62,7 @@
 
 	<target name="singletest" description="Start a test job on one node." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
-			<sysproperty key="java.library.path" value="${lib}/linux" />
+			<sysproperty key="java.library.path" value="${syslib}" />
 		    <arg value="configs/master.cfg"/>
 		    <arg value="demos.WordCount"/>
 		    <arg value="words.json"/>
