@@ -32,31 +32,41 @@ public final class ReducingStage extends MapReduceStage {
 		if (event instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			KeyPayload payload = (KeyPayload) deliver.payload;
-			dispatchGet(payload);
-			if (!reducers.containsKey(payload.domain)) {
-				try {
-					Reducer r = (Reducer) classLoader.loadClass(payload.domain).newInstance();
-					reducers.put(payload.domain, r);
-				} catch (Exception e) {
-					BUG(e);
-				}
-			}
+			handleReduceRequest(payload);
 		} else if (event instanceof Dht.GetResp) {
-			Dht.GetResp resp = (GetResp) event;
-			KeyPayload k = (KeyPayload) resp.user_data;
-			if (responses.containsKey(k)) {
-				responses.get(k).append(resp);
-			} else {
-				responses.put(k, new DhtValues(resp));
-			}
-			if (responses.get(k).hasMore()) {
-				dispatchGet(k, resp.placemark);
-			} else {
-				reducers.get(k.domain).reduce(responses.get(k).getKey(), responses.get(k), new Collector(k.domain));
-				dispatchTo(BigInteger.ZERO, MasterStage.app_id, k); // FIXME reducer done
-			}
+			handleGetResponse((GetResp) event);
 		} else {
 			BUG("Unexpected event:" + event);
+		}
+	}
+
+	private void handleReduceRequest(KeyPayload payload) {
+		dispatchGet(payload);
+		if (!reducers.containsKey(payload.domain)) {
+			try {
+				Reducer r = (Reducer) classLoader.loadClass(payload.domain)
+						.newInstance();
+				reducers.put(payload.domain, r);
+			} catch (Exception e) {
+				BUG(e);
+			}
+		}
+	}
+
+	private void handleGetResponse(GetResp event) {
+		DhtValues resp = new DhtValues(event);
+		if (responses.containsKey(resp.key)) {
+			responses.get(resp.key).append(resp);
+		} else {
+			responses.put(resp.key, resp);
+		}
+		DhtValues total = responses.get(resp.key);
+		if (total.hasMore()) {
+			dispatchGet(total.key, total.getPlacemark());
+		} else {
+			reducers.get(total.key.domain).reduce(total.key.data, total,
+					new Collector(total.key.domain));
+			dispatchTo(BigInteger.ZERO, MasterStage.app_id, total.key);
 		}
 	}
 
@@ -64,19 +74,20 @@ public final class ReducingStage extends MapReduceStage {
 	public long getAppID() {
 		return app_id;
 	}
-	
+
 	private class Collector implements OutputCollector {
 		private String domain;
-		
+
 		public Collector(String domain) {
 			this.domain = domain;
 		}
-		
+
 		@Override
 		public void collect(String key, String value) {
 			KeyValue p = new KeyValue(domain, key, value);
-			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p); // FIXME wrong node ID
+			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p); // FIXME wrong
+																// node ID
 		}
 	}
-	
+
 }

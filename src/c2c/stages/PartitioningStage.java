@@ -69,20 +69,20 @@ public final class PartitioningStage extends MapReduceStage {
 	
 	private void handleIntermediateValues(Dht.GetResp response) {
 		DhtValues resp = new DhtValues(response);
-		if (value_buffer.containsKey(resp.getDomain())) {
-			value_buffer.get(resp.getDomain()).append(resp);
+		if (value_buffer.containsKey(resp.key.domain)) {
+			value_buffer.get(resp.key.domain).append(resp);
 		} else {
-			value_buffer.put(resp.getDomain(), resp);
+			value_buffer.put(resp.key.domain, resp);
 		}
-		DhtValues total = value_buffer.get(resp.getDomain());
+		DhtValues total = value_buffer.get(resp.key.domain);
 		if (total.hasMore()) {
 			dispatchGet(total.key, total.getPlacemark());
 			logger.info("There were more values...");
 		} else {
 			logger.info("There were " + total.size());
-			dispatch(new ReducingUnderway(total.getDomain(), total.size()));
+			dispatch(new ReducingUnderway(total.key.domain, total.size()));
 			for (String key : total) {
-				KeyPayload redKey = new KeyPayload(total.getDomain(), key);
+				KeyPayload redKey = new KeyPayload(total.key.domain, key);
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
 			}
 		}

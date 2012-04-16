@@ -71,14 +71,6 @@ public class DhtValues implements Iterable<String> {
 		return placemark;
 	}
 	
-	public String getKey() {
-		return key.data;
-	}
-	
-	public String getDomain() {
-		return key.domain;
-	}
-	
 	public int size() {
 		return values.size();
 	}
