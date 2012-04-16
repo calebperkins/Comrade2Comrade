@@ -21,7 +21,7 @@ import bamboo.dht.Dht;
 public class DhtValues implements Iterable<String> {
 	private LinkedList<Dht.GetValue> values;
 	private StorageManager.Key placemark;
-	private KeyPayload key;
+	public final KeyPayload key;
 
 	private class GetRespIterator implements Iterator<String> {
 		private Iterator<Dht.GetValue> raw = values.iterator();
@@ -58,12 +58,8 @@ public class DhtValues implements Iterable<String> {
 		key = (KeyPayload) resp.user_data;
 	}
 	
-	public void append(Dht.GetResp resp) {
-		@SuppressWarnings("unchecked")
-		LinkedList<Dht.GetValue> x = resp.values;
-		
-		values.addAll(x);
-		
+	public void append(DhtValues resp) {
+		values.addAll(resp.values);
 		placemark = resp.placemark;
 	}
 	
@@ -77,6 +73,14 @@ public class DhtValues implements Iterable<String> {
 	
 	public String getKey() {
 		return key.data;
+	}
+	
+	public String getDomain() {
+		return key.domain;
+	}
+	
+	public int size() {
+		return values.size();
 	}
 
 	@Override

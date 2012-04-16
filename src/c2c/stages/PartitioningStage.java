@@ -24,6 +24,8 @@ public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
 	private final Map<String, Integer> expected = new HashMap<String, Integer>();
+	
+	private final Map<String, DhtValues> value_buffer = new HashMap<String, DhtValues>();
 
 	// What mappers for an original input key have completed
 	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
@@ -48,16 +50,41 @@ public final class PartitioningStage extends MapReduceStage {
 			expected.put(mapping.domain, mapping.expected);
 			completed.put(mapping.domain, new HashSet<String>());
 		} else if (event instanceof Dht.GetResp) {
-			Dht.GetResp resp = (Dht.GetResp) event;
+			/*Dht.GetResp resp = (Dht.GetResp) event;
 			KeyPayload kp = (KeyPayload) resp.user_data;
 			logger.info(kp + " has " + resp.values.size() + " values.");
 			dispatch(new ReducingUnderway(kp.domain, resp.values.size()));
-			for (String key : new DhtValues(resp)) {
+			DhtValues x = new DhtValues(resp);
+			for (String key : x) {
 				KeyPayload redKey = new KeyPayload(kp.domain, key);
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
 			}
+			if (x.hasMore())
+				BUG("NEED MORE");*/
+			handleIntermediateValues((Dht.GetResp) event);
 		} else {
 			BUG("Event unknown");
+		}
+	}
+	
+	private void handleIntermediateValues(Dht.GetResp response) {
+		DhtValues resp = new DhtValues(response);
+		if (value_buffer.containsKey(resp.getDomain())) {
+			value_buffer.get(resp.getDomain()).append(resp);
+		} else {
+			value_buffer.put(resp.getDomain(), resp);
+		}
+		DhtValues total = value_buffer.get(resp.getDomain());
+		if (total.hasMore()) {
+			dispatchGet(total.key, total.getPlacemark());
+			logger.info("There were more values...");
+		} else {
+			logger.info("There were " + total.size());
+			dispatch(new ReducingUnderway(total.getDomain(), total.size()));
+			for (String key : total) {
+				KeyPayload redKey = new KeyPayload(total.getDomain(), key);
+				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
+			}
 		}
 	}
 
