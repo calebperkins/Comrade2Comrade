@@ -4,6 +4,7 @@ import ostore.util.InputBuffer;
 import ostore.util.OutputBuffer;
 import ostore.util.QSException;
 import ostore.util.QuickSerializable;
+import seda.sandStorm.api.QueueElementIF;
 
 /**
  * A key-value pair for mapping.
@@ -11,7 +12,7 @@ import ostore.util.QuickSerializable;
  * @author Caleb Perkins
  * 
  */
-public class KeyValue implements QuickSerializable, Comparable<KeyValue> {
+public class KeyValue implements QuickSerializable, Comparable<KeyValue>, QueueElementIF {
 	public final KeyPayload key;
 	public final String value;
 

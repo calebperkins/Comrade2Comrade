@@ -53,6 +53,7 @@ public final class ReducingStage extends MapReduceStage {
 				dispatchGet(k, resp.placemark);
 			} else {
 				reducers.get(k.domain).reduce(responses.get(k).getKey(), responses.get(k), new Collector(k.domain));
+				dispatchTo(BigInteger.ZERO, MasterStage.app_id, k); // FIXME reducer done
 			}
 		} else {
 			BUG("Unexpected event:" + event);

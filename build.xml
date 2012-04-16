@@ -63,9 +63,10 @@
 	<target name="singletest" description="Start a test job on one node." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/master.cfg"/>
-		    <arg value="demos.WordCount"/>
-		    <arg value="words.json"/>
+		    <arg value="configs/master.cfg" />
+		    <arg value="demos.WordCount" />
+		    <arg value="words.json" />
+			<arg value="/tmp/results.json" />
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>

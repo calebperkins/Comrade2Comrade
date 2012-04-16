@@ -51,6 +51,7 @@ public final class PartitioningStage extends MapReduceStage {
 			Dht.GetResp resp = (Dht.GetResp) event;
 			KeyPayload kp = (KeyPayload) resp.user_data;
 			logger.info(kp + " has " + resp.values.size() + " values.");
+			dispatch(new ReducingUnderway(kp.domain, resp.values.size()));
 			for (String key : new DhtValues(resp)) {
 				KeyPayload redKey = new KeyPayload(kp.domain, key);
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
