@@ -3,6 +3,9 @@ package c2c.stages;
 import java.io.FileReader;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -33,6 +36,12 @@ public class ClientStage extends MapReduceStage {
 
 	public ClientStage() throws Exception {
 		super(null);
+		
+		// Configure built-in stages to be less noisy
+		Logger.getLogger(bamboo.lss.ASyncCoreImpl.class).setLevel(Level.WARN);
+		Logger.getLogger(bamboo.db.StorageManager.class).setLevel(Level.WARN);
+		Logger.getLogger(bamboo.dmgr.DataManager.class).setLevel(Level.WARN);
+		Logger.getLogger(bamboo.dht.Dht.class).setLevel(Level.WARN);
 	}
 
 	@Override
@@ -52,7 +61,6 @@ public class ClientStage extends MapReduceStage {
 			}
 			classifier.dispatch_later(req, 1000);
 		}
-
 	}
 
 	@Override
