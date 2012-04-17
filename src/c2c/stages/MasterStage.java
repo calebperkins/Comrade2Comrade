@@ -61,7 +61,6 @@ public final class MasterStage extends MapReduceStage {
 				BUG("Unknown payload.");
 			}	
 		} else if (event instanceof JobRequest) { // Distribute jobs to mappers.
-			logger.fatal("fag");
 			JobRequest req = (JobRequest) event;
 			dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 			for (KeyValue pair : req.pairs) {
