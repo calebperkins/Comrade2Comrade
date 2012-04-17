@@ -26,42 +26,37 @@ public final class MappingStage extends MapReduceStage {
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) { // do the computation
-			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
-			if (deliver.payload instanceof KeyValue) {
-				KeyValue p = (KeyValue) deliver.payload;
-				if (!mappers.containsKey(p.key.domain)) {
-					try {
-						Mapper m = (Mapper) classLoader.loadClass(p.key.domain)
-								.newInstance();
-						mappers.put(p.key.domain, m);
-					} catch (Exception e) {
-						BUG(e);
-					}
-				}
-				map(p, deliver);
-			} else {
-				BUG("Unknown");
-			}
+			handleMapRequest((BambooRouteDeliver) event);
 		} else if (event instanceof Dht.PutResp) {
-			PutResp resp = (PutResp) event;
-			if (resp.result != bamboo_stat.BAMBOO_OK) // TODO better handling
-				BUG("Put was unsuccessful. System is overcapacity!");
+			handlePutResp((PutResp) event);
 		} else {
 			BUG("Event " + event + " unknown.");
 		}
 	}
 
-	/**
-	 * Perform the computation and inform master the mapping is done.
-	 * 
-	 * @param pay
-	 * @param src
-	 */
-	private void map(KeyValue pay, BambooRouteDeliver msg) {
-		logger.info("Computing " + pay);
-		mappers.get(pay.key.domain).map(pay.key.data, pay.value,
-				new Collector(pay.key.domain));
-		dispatchTo(msg.src, PartitioningStage.app_id, pay.key);
+	private void initMapper(String domain) {
+		if (!mappers.containsKey(domain)) {
+			try {
+				Mapper m = (Mapper) classLoader.loadClass(domain).newInstance();
+				mappers.put(domain, m);
+			} catch (Exception e) {
+				BUG(e);
+			}
+		}
+	}
+
+	private void handleMapRequest(BambooRouteDeliver event) {
+		KeyValue kv = (KeyValue) event.payload;
+		initMapper(kv.key.domain);
+		logger.info("Computing " + kv);
+		mappers.get(kv.key.domain).map(kv.key.data, kv.value,
+				new Collector(kv.key.domain));
+		dispatchTo(event.src, PartitioningStage.app_id, kv.key);
+	}
+
+	private void handlePutResp(Dht.PutResp response) {
+		if (response.result != bamboo_stat.BAMBOO_OK) // TODO better handling
+			BUG("Put was unsuccessful. System is overcapacity!");
 	}
 
 	@Override
