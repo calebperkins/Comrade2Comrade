@@ -37,7 +37,7 @@
 	<target name="gateway" description="Start a gateway." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/master.cfg"/>
+		    <arg value="configs/node0.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
@@ -50,7 +50,7 @@
 	<target name="slave" description="Start a second client to connect to the gateway" depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/slave.cfg"/>
+		    <arg value="configs/node1.cfg"/>
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
@@ -63,7 +63,7 @@
 	<target name="singletest" description="Start a test job on one node." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/master.cfg" />
+		    <arg value="configs/node0.cfg" />
 		    <arg value="demos.WordCount" />
 		    <arg value="words.json" />
 			<arg value="/tmp/results.json" />
