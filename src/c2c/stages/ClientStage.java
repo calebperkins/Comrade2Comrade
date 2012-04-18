@@ -1,9 +1,14 @@
 package c2c.stages;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -39,16 +44,42 @@ public class ClientStage extends MapReduceStage {
 	public static void main(String[] args) throws Exception {
 		if (args.length == 2 || args.length > 4) {
 			System.err
-					.println("Arguments: config_file class_name input_file output_file");
+					.println("Arguments: host:port class_name input_file output_file");
 			System.exit(1);
 		}
-		String[] config = { args[0] };
+		
+		String[] config = { replace("configs/template.cfg", args[0]) };
 		if (args.length == 4) {
 			class_name = args[1];
 			input_file = args[2];
 			output_file = args[3];
 		}
 		bamboo.lss.DustDevil.main(config);
+	}
+	
+	/**
+	 * Writes out a temporary parsed configuration file
+	 * @param filepath the path of the template file
+	 * @param node what node ID this corresponds to, something like "localhost:3200"
+	 * @return the path to the temporary file
+	 * @throws IOException
+	 */
+	private static String replace(String filepath, String node) throws IOException {
+		File tmp = File.createTempFile(node, ".cfg");
+		PrintWriter out = new PrintWriter(tmp);
+		
+		BufferedReader in = new BufferedReader(new FileReader(filepath));
+		
+		String line = null;
+		while ((line = in.readLine()) != null) {
+			line = line.replace("$NODE_ID", node);
+			out.println(line);
+		}
+		
+		out.close();
+		in.close();
+				
+		return tmp.getAbsolutePath();
 	}
 
 	public ClientStage() throws Exception {

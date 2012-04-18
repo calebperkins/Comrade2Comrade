@@ -34,10 +34,13 @@
 		<delete dir="${build}" />
 	</target>
 
-	<target name="gateway" description="Start a gateway." depends="compile">
+	<target name="server" description="Start a node without a job." depends="compile">
+		<condition property="host" else="localhost:3200">
+			<isset property="host" />
+		</condition>
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/node0.cfg"/>
+		    <arg value="${host}" />
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
@@ -47,26 +50,29 @@
 		</java>
 	</target>
 
-	<target name="slave" description="Start a second client to connect to the gateway" depends="compile">
+	<target name="test" description="Test with a WordCount." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/node1.cfg"/>
-			<classpath>
-				<fileset dir="${lib}">
-					<include name="**/*.jar"/>
-				</fileset>
-				<path location="${build}" />
-			</classpath>
-		</java>
-	</target>
-
-	<target name="singletest" description="Start a test job on one node." depends="compile">
-		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
-			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/node1.cfg" />
+		    <arg value="localhost:3200" />
 		    <arg value="demos.WordCount" />
 		    <arg value="words.json" />
 			<arg value="/tmp/results.json" />
+			<classpath>
+				<fileset dir="${lib}">
+					<include name="**/*.jar"/>
+				</fileset>
+				<path location="${build}" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="client" description="Start a client to run the given job." depends="compile">
+		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
+			<sysproperty key="java.library.path" value="${syslib}" />
+		    <arg value="${host}" />
+		    <arg value="${job}" />
+		    <arg value="${in}" />
+			<arg value="${out}" />
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
