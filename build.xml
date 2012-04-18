@@ -12,7 +12,7 @@
 	</target>
 
 	<target name="compile" depends="init" description="Compile the source">
-		<javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+		<javac srcdir="${src}" destdir="${build}" includeantruntime="false" debug="true" debuglevel="lines, vars, and source">
 			<classpath>
 				<fileset dir="${lib}">
 					<include name="**/*.jar"/>
@@ -63,7 +63,7 @@
 	<target name="singletest" description="Start a test job on one node." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="configs/node0.cfg" />
+		    <arg value="configs/node1.cfg" />
 		    <arg value="demos.WordCount" />
 		    <arg value="words.json" />
 			<arg value="/tmp/results.json" />

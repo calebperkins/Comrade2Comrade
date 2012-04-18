@@ -94,6 +94,8 @@ public class ClientStage extends MapReduceStage {
 
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
+		if (writer == null)
+			BUG("This should not be a client.");
 		if (event instanceof KeyValue) {
 			writeResult((KeyValue) event);
 		} else if (event instanceof JobDone) {

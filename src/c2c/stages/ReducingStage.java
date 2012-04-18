@@ -21,6 +21,7 @@ public final class ReducingStage extends MapReduceStage {
 			.getClassLoader();
 	private Map<String, Reducer> reducers = new HashMap<String, Reducer>();
 	private Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
+	private Map<String, BigInteger> masters = new HashMap<String, BigInteger>();
 
 	public ReducingStage() throws Exception {
 		super(KeyPayload.class, Dht.GetResp.class);
@@ -32,6 +33,7 @@ public final class ReducingStage extends MapReduceStage {
 		if (event instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			KeyPayload payload = (KeyPayload) deliver.payload;
+			masters.put(payload.domain, deliver.src);
 			handleReduceRequest(payload);
 		} else if (event instanceof Dht.GetResp) {
 			handleGetResponse((GetResp) event);
@@ -41,6 +43,7 @@ public final class ReducingStage extends MapReduceStage {
 	}
 
 	private void handleReduceRequest(KeyPayload payload) {
+		logger.info("Reducing " + payload);
 		dispatchGet(payload);
 		if (!reducers.containsKey(payload.domain)) {
 			try {
@@ -66,7 +69,8 @@ public final class ReducingStage extends MapReduceStage {
 		} else {
 			reducers.get(total.key.domain).reduce(total.key.data, total,
 					new Collector(total.key.domain));
-			dispatchTo(BigInteger.ZERO, MasterStage.app_id, total.key);
+			dispatchTo(masters.get(total.key.domain), MasterStage.app_id,
+					total.key);
 		}
 	}
 
@@ -85,8 +89,7 @@ public final class ReducingStage extends MapReduceStage {
 		@Override
 		public void collect(String key, String value) {
 			KeyValue p = new KeyValue(domain, key, value);
-			dispatchTo(BigInteger.ZERO, MasterStage.app_id, p); // FIXME wrong
-																// node ID
+			dispatchTo(masters.get(domain), MasterStage.app_id, p);
 		}
 	}
 

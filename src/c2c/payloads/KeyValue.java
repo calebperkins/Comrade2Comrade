@@ -30,6 +30,10 @@ public class KeyValue implements QuickSerializable, Comparable<KeyValue>, QueueE
 		key = (KeyPayload) buf.nextObject();
 		value = buf.nextString();
 	}
+	
+	public boolean isMeta() {
+		return key.data.equals(key.domain + ":intermediate");
+	}
 
 	@Override
 	public void serialize(OutputBuffer buf) {

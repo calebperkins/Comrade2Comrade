@@ -66,9 +66,9 @@ public final class PartitioningStage extends MapReduceStage {
 		DhtValues total = value_buffer.get(resp.key.domain);
 		if (total.hasMore()) {
 			dispatchGet(total.key, total.getPlacemark());
-			logger.info("There were more values...");
+			logger.debug("There were more values...");
 		} else {
-			logger.info("There were " + total.size());
+			logger.info("There are " + total.size() + " intermediate keys. Starting reduce stage.");
 			dispatch(new ReducingUnderway(total.key.domain, total.size()));
 			for (String key : total) {
 				KeyPayload redKey = new KeyPayload(total.key.domain, key);

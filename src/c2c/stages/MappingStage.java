@@ -1,10 +1,18 @@
 package c2c.stages;
 
+import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
+
 import c2c.api.*;
+import c2c.payloads.IntermediateKeyValue;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
+import c2c.payloads.Value;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
@@ -13,8 +21,22 @@ import bamboo.dht.Dht.PutResp;
 import bamboo.dht.bamboo_stat;
 
 public final class MappingStage extends MapReduceStage {
-	private final Map<String, Mapper> mappers = new HashMap<String, Mapper>();
 	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
+	
+	// Here KeyPayload corresponds to a mapper key
+	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
+	
+	private final Map<String, Job> jobs = new HashMap<String, MappingStage.Job>();
+	
+	private class Job {
+		public final BigInteger master;
+		public final Mapper mapper;
+		
+		public Job(String domain, BigInteger master) throws Exception {
+			mapper = (Mapper) classLoader.loadClass(domain).newInstance();
+			this.master = master;
+		}
+	}
 
 	public static final long app_id = bamboo.router.Router
 			.app_id(MappingStage.class);
@@ -34,29 +56,44 @@ public final class MappingStage extends MapReduceStage {
 		}
 	}
 
-	private void initMapper(String domain) {
-		if (!mappers.containsKey(domain)) {
+	private Job getJob(String domain, BigInteger master) {
+		if (!jobs.containsKey(domain)) {
 			try {
-				Mapper m = (Mapper) classLoader.loadClass(domain).newInstance();
-				mappers.put(domain, m);
+				jobs.put(domain, new Job(domain, master));
 			} catch (Exception e) {
 				BUG(e);
 			}
 		}
+		return jobs.get(domain);
 	}
 
 	private void handleMapRequest(BambooRouteDeliver event) {
 		KeyValue kv = (KeyValue) event.payload;
-		initMapper(kv.key.domain);
-		logger.info("Computing " + kv);
-		mappers.get(kv.key.domain).map(kv.key.data, kv.value,
-				new Collector(kv.key.domain));
-		dispatchTo(event.src, PartitioningStage.app_id, kv.key);
+		Job job = getJob(kv.key.domain, event.src);
+		logger.info("Mapping " + kv.key);
+		Collector c = new Collector(kv.key);
+		job.mapper.map(kv.key.data, kv.value, c);
+		c.flush();
 	}
 
 	private void handlePutResp(Dht.PutResp response) {
-		if (response.result != bamboo_stat.BAMBOO_OK) // TODO better handling
-			BUG("Put was unsuccessful. System is overcapacity!");
+		IntermediateKeyValue kv = (IntermediateKeyValue) response.user_data;
+		if (response.result == bamboo_stat.BAMBOO_OK) {
+			remaining.put(kv.creator, remaining.get(kv.creator) - 1);
+			if (remaining.get(kv.creator) == 0) {
+				dispatchTo(jobs.get(kv.key.domain).master, PartitioningStage.app_id, kv.creator);
+			}
+		} else {
+			logger.debug("Repeating put...");
+			doPut(kv);
+		}
+	}
+	
+	private void doPut(IntermediateKeyValue kv) {
+		Dht.PutReq req = new Dht.PutReq(kv.key.toNode(), kv.value.toByteBuffer(),
+				kv.value.hash(), true, my_sink, kv, 600,
+				my_node_id.address());
+		classifier.dispatch_later(req, 5000);
 	}
 
 	@Override
@@ -65,18 +102,40 @@ public final class MappingStage extends MapReduceStage {
 	}
 
 	private class Collector implements OutputCollector {
-		private String domain;
-		private KeyPayload inter;
+		private KeyPayload mapping_key;
+		
+		private Set<String> keys = new HashSet<String>();
+		private Collection<KeyValue> keyvalues = new LinkedList<KeyValue>();
 
-		public Collector(String domain) {
-			this.domain = domain;
-			inter = intermediateKeys(domain);
+		public Collector(KeyPayload mapping_key) {
+			this.mapping_key = mapping_key;
+			assert mapping_key != null;
+		}
+		
+		public void flush() {
+			remaining.put(mapping_key, keys.size() + keyvalues.size());
+			KeyPayload inter = intermediateKeys(mapping_key.domain);
+			for (String key : keys) {
+				makePut(inter, key, false);
+			}
+			for (KeyValue kv : keyvalues) {
+				makePut(kv.key, kv.value, true);
+			}
 		}
 
 		@Override
 		public void collect(String key, String value) {
-			dispatchPut(new KeyPayload(domain, key), value, true);
-			dispatchPut(inter, key, false);
+			keys.add(key);
+			keyvalues.add(new KeyValue(new KeyPayload(mapping_key.domain, key), value));
+		}
+		
+		private void makePut(KeyPayload key, String value, boolean allow_duplicates) {
+			Value val = new Value(value, allow_duplicates);
+			IntermediateKeyValue ud = new IntermediateKeyValue(mapping_key, key, val);
+			Dht.PutReq req = new Dht.PutReq(key.toNode(), val.toByteBuffer(),
+					val.hash(), true, my_sink, ud, 600,
+					my_node_id.address());
+			dispatch(req);
 		}
 	}
 
