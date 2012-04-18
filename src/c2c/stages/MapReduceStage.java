@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.Random;
 
 import c2c.payloads.KeyPayload;
+import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
 
 import ostore.util.QuickSerializable;
@@ -129,7 +130,7 @@ public abstract class MapReduceStage extends StandardStage {
 			boolean allow_duplicates) {
 		Value val = new Value(value, allow_duplicates);
 		Dht.PutReq req = new Dht.PutReq(key.toNode(), val.toByteBuffer(),
-				val.hash(), true, my_sink, key, 600,
+				val.hash(), true, my_sink, new KeyValue(key, value), 600,
 				my_node_id.address());
 		dispatch(req);
 	}

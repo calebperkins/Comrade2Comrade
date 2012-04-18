@@ -20,6 +20,11 @@ public class KeyValue implements QuickSerializable, Comparable<KeyValue>, QueueE
 		this.key = new KeyPayload(domain, key);
 		value = val;
 	}
+	
+	public KeyValue(KeyPayload key, String value) {
+		this.key = key;
+		this.value = value;
+	}
 
 	public KeyValue(InputBuffer buf) throws QSException {
 		key = (KeyPayload) buf.nextObject();
