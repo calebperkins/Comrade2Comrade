@@ -16,13 +16,15 @@ public class SecuredRouter extends Router {
     	super();
     }
 
-    public void init (ConfigDataIF config) throws Exception {
+    @Override
+	public void init (ConfigDataIF config) throws Exception {
     	super.init(config);
     	join_password = config_get_string(config, "join_password");
     	accept_password = config_get_string(config, "accept_password");
     	
     	joinAlarm = new bamboo.util.Curry.Thunk3<Integer,Integer,Integer>() {
-            public void run(Integer tries, Integer period, Integer revTTL) {
+            @Override
+			public void run(Integer tries, Integer period, Integer revTTL) {
                 if (! initialized) {
                     tries = new Integer(tries.intValue() + 1);
                     revTTL = new Integer(revTTL.intValue() + 1);
@@ -42,7 +44,8 @@ public class SecuredRouter extends Router {
             }
         };
     	partitionCheckAlarm  = new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
                 if (down_nodes.size () > 0) {
                     int which = rand.nextInt (down_nodes.size ());
                     Iterator<NodeId> i = down_nodes.iterator ();
@@ -69,7 +72,8 @@ public class SecuredRouter extends Router {
             }
         };
         ready = new Runnable() {
-            public void run() {
+            @Override
+			public void run() {
                 network = Network.instance(my_node_id);
                 vivaldi = Vivaldi.instance(my_node_id);
                 rpc = Rpc.instance(my_node_id);
@@ -164,7 +168,8 @@ public class SecuredRouter extends Router {
     			req.inbound = false;
     			req.comp_q = my_sink;
     			req.user_data = new RecursiveRouteCB (next_hop, 
-    					new Runnable() { public void run() { handleEvent(orig); }});
+    					new Runnable() { @Override
+						public void run() { handleEvent(orig); }});
     			req.timeout_sec = 5;
     			dispatch (req);
     		}	
@@ -174,7 +179,8 @@ public class SecuredRouter extends Router {
     	}
     }
     
-    public void handleEvent(QueueElementIF item) {
+    @Override
+	public void handleEvent(QueueElementIF item) {
     	//logger.info("SecuredRouter.handleEvent()");
     	if (item instanceof PingMsg) {
     		handle_ping_msg((PingMsg) item);

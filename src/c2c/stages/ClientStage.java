@@ -7,9 +7,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 

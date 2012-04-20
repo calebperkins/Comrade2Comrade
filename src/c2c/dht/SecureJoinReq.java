@@ -17,17 +17,20 @@ public class SecureJoinReq extends JoinReq {
 		password = buffer.nextString();
 	}
 	
+	@Override
 	public void serialize(OutputBuffer buffer) {
 		super.serialize(buffer);
 		buffer.add(password);
 	}
 	
+	@Override
 	public Object clone() throws CloneNotSupportedException {
 		SecureJoinReq result = (SecureJoinReq) super.clone();
 		result.password = password;
 		return result;
 	}
 	
+	@Override
 	public String toString() {
 		StringBuffer result = new StringBuffer(super.toString());
 		result.append(" password=");
