@@ -9,20 +9,17 @@ import java.util.Map;
 import java.util.Set;
 
 import c2c.api.*;
-import c2c.events.JobDone;
-import c2c.events.MappingUnderway;
 import c2c.payloads.IntermediateKeyValue;
+import c2c.payloads.JobStatus;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
-import c2c.utilities.WorkerTable;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
 import bamboo.dht.Dht;
 import bamboo.dht.Dht.PutResp;
 import bamboo.dht.bamboo_stat;
-import bamboo.router.PingMsg;
 
 public final class MappingStage extends MapReduceStage {
 	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
@@ -72,7 +69,7 @@ public final class MappingStage extends MapReduceStage {
 		return jobs.get(domain);
 	}
 
-	private void handleMapRequest(BambooRouteDeliver event) {
+	private void handleMapRequest(final BambooRouteDeliver event) {
 		final KeyValue kv = (KeyValue) event.payload;
 		Job job = getJob(kv.key.domain, event.src);
 		
@@ -81,7 +78,8 @@ public final class MappingStage extends MapReduceStage {
 		acore.register_timer(10, new Runnable() {
 			public void run() {
 				if (working) {
-					dispatch(new MappingUnderway(kv.key.domain, -1));
+					dispatchTo(event.src, MasterStage.app_id, 
+							new JobStatus(kv.key.domain, false, true));
 					acore.register_timer(1000, this);
 				}
 			}
@@ -93,8 +91,9 @@ public final class MappingStage extends MapReduceStage {
 		c.flush();
 		working = false;
 		
-		// Tell the master - we're done
-		dispatch(new JobDone(kv.key.domain));
+		// Tell the master that we're done
+		dispatchTo(event.src, MasterStage.app_id,
+				new JobStatus(kv.key.domain, true, true));
 	}
 
 	private void handlePutResp(Dht.PutResp response) {

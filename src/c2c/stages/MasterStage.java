@@ -63,6 +63,18 @@ public final class MasterStage extends MapReduceStage {
 				handleResultBack((KeyValue) deliver.payload);
 			} else if (deliver.payload instanceof KeyPayload) {
 				handleReducerDone((KeyPayload) deliver.payload);
+			} else if (deliver.payload instanceof JobStatus) {
+				JobStatus status = (JobStatus) deliver.payload;
+				if (status.mapper) {
+					if (status.done) {
+						// Mapper is done - remove from tables
+						workers.removeJob(status.domain);
+						jobs.remove(status.domain);
+					} else {
+						// Mapper still working - refresh in table
+						workers.addJob(status.domain);
+					}
+				}
 			} else {
 				BUG("Unknown payload.");
 			}	
@@ -80,14 +92,6 @@ public final class MasterStage extends MapReduceStage {
 			
 			// Schedule rescan of worker table
 			acore.register_timer(4500, rescanTable);
-		} else if (event instanceof MappingUnderway) {
-			// Update job in table - it's not dead!
-			workers.addJob(((MappingUnderway)event).domain);
-		} else if (event instanceof JobDone) {
-			// A mapper is finished - remove it from table and stop checking
-			String done = ((JobDone)event).domain;
-			workers.removeJob(done);
-			jobs.remove(done);
 		} else if (event instanceof ReducingUnderway) {
 			handleReducingUnderway((ReducingUnderway) event);
 		} else {
