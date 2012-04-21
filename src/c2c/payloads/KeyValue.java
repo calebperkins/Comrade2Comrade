@@ -31,8 +31,12 @@ public class KeyValue implements QuickSerializable, Comparable<KeyValue>, QueueE
 		value = buf.nextString();
 	}
 	
+	/**
+	 * Is this key-value system data or application data?
+	 * @return whether this key-value is for bookkeeping
+	 */
 	public boolean isMeta() {
-		return key.data.equals(key.domain + ":intermediate");
+		return key.isMeta();
 	}
 
 	@Override

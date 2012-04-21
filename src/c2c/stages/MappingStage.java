@@ -114,7 +114,7 @@ public final class MappingStage extends MapReduceStage {
 		
 		public void flush() {
 			remaining.put(mapping_key, keys.size() + keyvalues.size());
-			KeyPayload inter = intermediateKeys(mapping_key.domain);
+			KeyPayload inter = KeyPayload.intermediateKeys(mapping_key.domain);
 			for (String key : keys) {
 				makePut(inter, key, false);
 			}

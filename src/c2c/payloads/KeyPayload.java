@@ -20,6 +20,14 @@ public class KeyPayload implements QuickSerializable, Comparable<KeyPayload> {
 		domain = buf.nextString();
 		data = buf.nextString();
 	}
+	
+	public static KeyPayload intermediateKeys(String domain) {
+		return new KeyPayload(domain, "c2c:intermediate");
+	}
+	
+	public boolean isMeta() {
+		return data.startsWith("c2c:");
+	}
 
 	@Override
 	public void serialize(OutputBuffer buf) {

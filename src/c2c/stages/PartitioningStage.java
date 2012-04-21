@@ -43,7 +43,7 @@ public final class PartitioningStage extends MapReduceStage {
 			completed.get(k.domain).add(k.data);
 			// Mapping is done. Start reducing.
 			if (completed.get(k.domain).size() == expected.get(k.domain)) {
-				dispatchGet(intermediateKeys(k.domain));
+				dispatchGet(KeyPayload.intermediateKeys(k.domain));
 			}
 		} else if (event instanceof MappingUnderway) {
 			MappingUnderway mapping = (MappingUnderway) event;
