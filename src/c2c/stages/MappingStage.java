@@ -10,6 +10,7 @@ import java.util.Set;
 
 import c2c.api.*;
 import c2c.payloads.IntermediateKeyValue;
+import c2c.payloads.JobStatus;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
@@ -22,11 +23,12 @@ import bamboo.dht.bamboo_stat;
 
 public final class MappingStage extends MapReduceStage {
 	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
-	
+
 	// Here KeyPayload corresponds to a mapper key
 	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
 	
 	private final Map<String, Job> jobs = new HashMap<String, MappingStage.Job>();
+	private boolean working; // Job active?
 	
 	private class Job {
 		public final BigInteger master;
@@ -67,13 +69,31 @@ public final class MappingStage extends MapReduceStage {
 		return jobs.get(domain);
 	}
 
-	private void handleMapRequest(BambooRouteDeliver event) {
-		KeyValue kv = (KeyValue) event.payload;
+	private void handleMapRequest(final BambooRouteDeliver event) {
+		final KeyValue kv = (KeyValue) event.payload;
 		Job job = getJob(kv.key.domain, event.src);
+		
+		// Notify the master that we're now working
+		working = true;
+		acore.register_timer(10, new Runnable() {
+			public void run() {
+				if (working) {
+					dispatchTo(event.src, MasterStage.app_id, 
+							new JobStatus(kv.key.domain, false, true));
+					acore.register_timer(1000, this);
+				}
+			}
+		});
+		
 		logger.info("Mapping " + kv.key);
 		Collector c = new Collector(kv.key);
 		job.mapper.map(kv.key.data, kv.value, c);
 		c.flush();
+		working = false;
+		
+		// Tell the master that we're done
+		dispatchTo(event.src, MasterStage.app_id,
+				new JobStatus(kv.key.domain, true, true));
 	}
 
 	private void handlePutResp(Dht.PutResp response) {

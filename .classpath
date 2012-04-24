@@ -20,5 +20,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/ostore-seda-emu.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlrpc-1.2-b1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/gson-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/joda-time-2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

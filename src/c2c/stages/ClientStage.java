@@ -136,6 +136,7 @@ public class ClientStage extends MapReduceStage {
 	private void finishJob(JobDone job) {
 		logger.info("Job done! Results written to " + output_file);
 		try {
+			//writer.flush();
 			writer.endObject();
 			writer.close();
 		} catch (IOException e) {
