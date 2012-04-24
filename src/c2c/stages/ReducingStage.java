@@ -7,8 +7,12 @@ import bamboo.dht.Dht;
 import bamboo.dht.Dht.GetResp;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import c2c.payloads.KeyValue;
 import c2c.payloads.KeyPayload;
@@ -22,6 +26,8 @@ public final class ReducingStage extends MapReduceStage {
 	private Map<String, Reducer> reducers = new HashMap<String, Reducer>();
 	private Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
 	private Map<String, BigInteger> masters = new HashMap<String, BigInteger>();
+	
+	private final ExecutorService pool = Executors.newCachedThreadPool();
 
 	public ReducingStage() throws Exception {
 		super(KeyPayload.class, Dht.GetResp.class);
@@ -67,11 +73,35 @@ public final class ReducingStage extends MapReduceStage {
 		if (total.hasMore()) {
 			dispatchGet(total.key, total.getPlacemark());
 		} else {
-			reducers.get(total.key.domain).reduce(total.key.data, total,
-					new Collector(total.key.domain));
-			dispatchTo(masters.get(total.key.domain), MasterStage.app_id,
-					total.key);
+			performReduce(total);
 		}
+	}
+	
+	/**
+	 * Start a new thread because user's reduce may be blocking
+	 * @param total
+	 */
+	private void performReduce(final DhtValues total) {
+		final Reducer reducer = reducers.get(total.key.domain);
+		pool.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				final Collector c = new Collector(total.key.domain);
+				reducer.reduce(total.key.data, total, c);
+				
+				// Get back to main thread
+				acore.registerTimer(0, new Runnable() {
+					
+					@Override
+					public void run() {
+						c.flush();
+						dispatchTo(masters.get(total.key.domain), MasterStage.app_id,
+								total.key); // tell master we are done
+					}
+				});
+			}
+		});
 	}
 
 	@Override
@@ -81,15 +111,20 @@ public final class ReducingStage extends MapReduceStage {
 
 	private class Collector implements OutputCollector {
 		private String domain;
+		private Collection<KeyValue> buffer = new LinkedList<KeyValue>();
 
 		public Collector(String domain) {
 			this.domain = domain;
 		}
+		
+		public void flush() {
+			for (KeyValue kv : buffer)
+				dispatchTo(masters.get(domain), MasterStage.app_id, kv);
+		}
 
 		@Override
 		public void collect(String key, String value) {
-			KeyValue p = new KeyValue(domain, key, value);
-			dispatchTo(masters.get(domain), MasterStage.app_id, p);
+			buffer.add(new KeyValue(domain, key, value));
 		}
 	}
 
