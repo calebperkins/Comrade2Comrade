@@ -13,13 +13,13 @@ public class SlowWordCount implements Reducer, Mapper {
 
 	@Override
 	public void map(String key, String value, OutputCollector collector) {
+		long t0, t1; // busy-wait for 3 seconds
+		t0 = System.currentTimeMillis();
+		do {
+			t1 = System.currentTimeMillis();
+		} while ((t1 - t0) < 20 * 1000);
 		String[] words = value.split("\\s+");
 		for (String w : words) {
-			long t0, t1; // busy-wait for 3 seconds
-			t0 = System.currentTimeMillis();
-			do {
-				t1 = System.currentTimeMillis();
-			} while ((t1 - t0) < 3 * 1000);
 			collector.collect(w, "1");
 		}
 	}
