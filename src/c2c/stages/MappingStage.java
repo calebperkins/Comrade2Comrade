@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import c2c.api.*;
 import c2c.payloads.IntermediateKeyValue;
@@ -29,6 +31,8 @@ public final class MappingStage extends MapReduceStage {
 	
 	private final Map<String, Job> jobs = new HashMap<String, MappingStage.Job>();
 	private boolean working; // Job active?
+	
+	private final ExecutorService pool = Executors.newCachedThreadPool();
 	
 	private class Job {
 		public final BigInteger master;
@@ -71,29 +75,45 @@ public final class MappingStage extends MapReduceStage {
 
 	private void handleMapRequest(final BambooRouteDeliver event) {
 		final KeyValue kv = (KeyValue) event.payload;
-		Job job = getJob(kv.key.domain, event.src);
+		final Job job = getJob(kv.key.domain, event.src);
 		
 		// Notify the master that we're now working
 		working = true;
-		acore.register_timer(10, new Runnable() {
+		acore.registerTimer(10, new Runnable() {
 			public void run() {
 				if (working) {
 					dispatchTo(event.src, MasterStage.app_id, 
 							new JobStatus(kv.key.domain, false, true));
-					acore.register_timer(1000, this);
+					acore.registerTimer(1000, this);
 				}
 			}
 		});
 		
 		logger.info("Mapping " + kv.key);
-		Collector c = new Collector(kv.key);
-		job.mapper.map(kv.key.data, kv.value, c);
-		c.flush();
-		working = false;
 		
-		// Tell the master that we're done
-		dispatchTo(event.src, MasterStage.app_id,
-				new JobStatus(kv.key.domain, true, true));
+		// The user's map function may be blocking so start a new thread.
+		pool.execute(new Runnable() {
+			
+			@Override
+			public void run() {
+				final Collector c = new Collector(kv.key);
+				job.mapper.map(kv.key.data, kv.value, c);
+				
+				// Get back to main thread
+				acore.registerTimer(0, new Runnable() {
+					
+					@Override
+					public void run() {
+						c.flush();
+						working = false;
+						
+						// Tell the master that we're done
+						dispatchTo(event.src, MasterStage.app_id,
+								new JobStatus(kv.key.domain, true, true));
+					}
+				});
+			}
+		});
 	}
 
 	private void handlePutResp(Dht.PutResp response) {
