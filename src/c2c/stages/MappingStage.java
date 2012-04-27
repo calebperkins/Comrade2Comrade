@@ -49,7 +49,8 @@ public final class MappingStage extends MapReduceStage {
 			.app_id(MappingStage.class);
 
 	public MappingStage() throws Exception {
-		super(KeyValue.class, Dht.PutResp.class);
+		super(Dht.PutResp.class);
+		ostore.util.TypeTable.register_type(KeyValue.class);
 		ostore.util.TypeTable.register_type(JobStatus.class);
 	}
 

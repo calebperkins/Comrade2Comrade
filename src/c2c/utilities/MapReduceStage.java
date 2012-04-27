@@ -36,22 +36,17 @@ public abstract class MapReduceStage extends StandardStage {
 	protected static final Random rand = new Random();
 
 	/**
-	 * Register a stage with one payload and zero or more events.
+	 * Register a stage with zero or more events.
 	 * 
 	 * This registers three common events for you.
 	 * 
-	 * @param payload
-	 *            a payload, may be null
 	 * @param events
 	 *            additional events to subscribe to
 	 * @throws Exception
 	 */
-	protected MapReduceStage(Class<?> payload, Class<?>... events)
+	protected MapReduceStage(Class<?>... events)
 			throws Exception {
 		super();
-		if (payload != null) {
-			ostore.util.TypeTable.register_type(payload);
-		}
 		event_types = new Class[3 + events.length];
 		event_types[0] = StagesInitializedSignal.class;
 		event_types[1] = BambooRouteDeliver.class;

@@ -32,7 +32,7 @@ public final class PartitioningStage extends MapReduceStage {
 	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
 
 	public PartitioningStage() throws Exception {
-		super(KeyPayload.class, MappingUnderway.class, Dht.GetResp.class);
+		super(MappingUnderway.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
 		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}

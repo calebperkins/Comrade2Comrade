@@ -33,7 +33,8 @@ public final class MasterStage extends MapReduceStage {
 	private WorkerTable workers = new WorkerTable();
 
 	public MasterStage() throws Exception {
-		super(KeyValue.class, JobRequest.class, ReducingUnderway.class);
+		super(JobRequest.class, ReducingUnderway.class);
+		ostore.util.TypeTable.register_type(KeyValue.class);
 		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 	

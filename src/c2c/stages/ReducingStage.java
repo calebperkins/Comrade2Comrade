@@ -31,8 +31,9 @@ public final class ReducingStage extends MapReduceStage {
 	private final ExecutorService pool = Executors.newCachedThreadPool();
 
 	public ReducingStage() throws Exception {
-		super(KeyPayload.class, Dht.GetResp.class);
+		super(Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
+		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 
 	@Override

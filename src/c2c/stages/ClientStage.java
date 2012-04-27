@@ -81,7 +81,7 @@ public class ClientStage extends MapReduceStage {
 	}
 
 	public ClientStage() throws Exception {
-		super(null, KeyValue.class, JobDone.class);
+		super(KeyValue.class, JobDone.class);
 
 		// Configure built-in stages to be less noisy
 		Logger.getLogger(bamboo.lss.ASyncCoreImpl.class).setLevel(Level.WARN);
