@@ -28,16 +28,16 @@ public final class MappingStage extends MapReduceStage {
 
 	// Here KeyPayload corresponds to a mapper key
 	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
-	
+
 	private final Map<String, Job> jobs = new HashMap<String, MappingStage.Job>();
 	private boolean working; // Job active?
-	
+
 	private final ExecutorService pool = Executors.newCachedThreadPool();
-	
+
 	private class Job {
 		public final BigInteger master;
 		public final Mapper mapper;
-		
+
 		public Job(String domain, BigInteger master) throws Exception {
 			mapper = (Mapper) classLoader.loadClass(domain).newInstance();
 			this.master = master;
@@ -49,6 +49,7 @@ public final class MappingStage extends MapReduceStage {
 
 	public MappingStage() throws Exception {
 		super(KeyValue.class, Dht.PutResp.class);
+		ostore.util.TypeTable.register_type(JobStatus.class);
 	}
 
 	@Override
@@ -76,37 +77,37 @@ public final class MappingStage extends MapReduceStage {
 	private void handleMapRequest(final BambooRouteDeliver event) {
 		final KeyValue kv = (KeyValue) event.payload;
 		final Job job = getJob(kv.key.domain, event.src);
-		
+
 		// Notify the master that we're now working
 		working = true;
 		acore.registerTimer(10, new Runnable() {
 			public void run() {
 				if (working) {
-					dispatchTo(event.src, MasterStage.app_id, 
+					dispatchTo(event.src, MasterStage.app_id,
 							new JobStatus(kv.key.domain, false, true));
 					acore.registerTimer(1000, this);
 				}
 			}
 		});
-		
+
 		logger.info("Mapping " + kv.key);
-		
+
 		// The user's map function may be blocking so start a new thread.
 		pool.execute(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				final Collector c = new Collector(kv.key);
 				job.mapper.map(kv.key.data, kv.value, c);
-				
+
 				// Get back to main thread
 				acore.registerTimer(0, new Runnable() {
-					
+
 					@Override
 					public void run() {
 						c.flush();
 						working = false;
-						
+
 						// Tell the master that we're done
 						dispatchTo(event.src, MasterStage.app_id,
 								new JobStatus(kv.key.domain, true, true));
@@ -128,7 +129,7 @@ public final class MappingStage extends MapReduceStage {
 			doPut(kv);
 		}
 	}
-	
+
 	private void doPut(IntermediateKeyValue kv) {
 		Dht.PutReq req = new Dht.PutReq(kv.key.toNode(), kv.value.toByteBuffer(),
 				kv.value.hash(), true, my_sink, kv, 600,
@@ -143,7 +144,7 @@ public final class MappingStage extends MapReduceStage {
 
 	private class Collector implements OutputCollector {
 		private KeyPayload mapping_key;
-		
+
 		private Set<String> keys = new HashSet<String>();
 		private Collection<KeyValue> keyvalues = new LinkedList<KeyValue>();
 
@@ -151,7 +152,7 @@ public final class MappingStage extends MapReduceStage {
 			this.mapping_key = mapping_key;
 			assert mapping_key != null;
 		}
-		
+
 		public void flush() {
 			remaining.put(mapping_key, keys.size() + keyvalues.size());
 			KeyPayload inter = KeyPayload.intermediateKeys(mapping_key.domain);
@@ -168,7 +169,7 @@ public final class MappingStage extends MapReduceStage {
 			keys.add(key);
 			keyvalues.add(new KeyValue(new KeyPayload(mapping_key.domain, key), value));
 		}
-		
+
 		private void makePut(KeyPayload key, String value, boolean allow_duplicates) {
 			Value val = new Value(value, allow_duplicates);
 			IntermediateKeyValue ud = new IntermediateKeyValue(mapping_key, key, val);
