@@ -49,6 +49,7 @@ public final class MappingStage extends MapReduceStage {
 
 	public MappingStage() throws Exception {
 		super(KeyValue.class, Dht.PutResp.class);
+		ostore.util.TypeTable.register_type(JobStatus.class);
 	}
 
 	@Override
