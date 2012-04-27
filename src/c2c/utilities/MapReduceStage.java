@@ -1,4 +1,4 @@
-package c2c.stages;
+package c2c.utilities;
 
 import java.math.BigInteger;
 import java.util.LinkedList;

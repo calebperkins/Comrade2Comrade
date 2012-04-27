@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import c2c.payloads.KeyValue;
 import c2c.payloads.KeyPayload;
 import c2c.utilities.DhtValues;
+import c2c.utilities.MapReduceStage;
 
 public final class ReducingStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router

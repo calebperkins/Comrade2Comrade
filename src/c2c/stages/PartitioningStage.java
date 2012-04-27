@@ -7,6 +7,7 @@ import java.util.Set;
 
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
+import c2c.utilities.MapReduceStage;
 import c2c.events.*;
 
 import seda.sandStorm.api.*;

@@ -18,6 +18,7 @@ import com.google.gson.stream.JsonWriter;
 import c2c.events.JobDone;
 import c2c.events.JobRequest;
 import c2c.payloads.KeyValue;
+import c2c.utilities.MapReduceStage;
 import seda.sandStorm.api.ConfigDataIF;
 import seda.sandStorm.api.QueueElementIF;
 
