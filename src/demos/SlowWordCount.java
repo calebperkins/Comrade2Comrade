@@ -1,15 +1,14 @@
 package demos;
 
-import c2c.api.Mapper;
+import c2c.api.MapReduceApplication;
 import c2c.api.OutputCollector;
-import c2c.api.Reducer;
 
 /**
  * Simulates a slow mapping and reducing operation.
  * @author Caleb Perkins
  *
  */
-public class SlowWordCount implements Reducer, Mapper {
+public class SlowWordCount implements MapReduceApplication {
 	private static final int WAIT_SECONDS = 20;
 
 	@Override

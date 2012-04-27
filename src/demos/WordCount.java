@@ -1,10 +1,9 @@
 package demos;
 
-import c2c.api.Mapper;
+import c2c.api.MapReduceApplication;
 import c2c.api.OutputCollector;
-import c2c.api.Reducer;
 
-public class WordCount implements Reducer, Mapper {
+public class WordCount implements MapReduceApplication {
 
 	@Override
 	public void map(String key, String value, OutputCollector collector) {
