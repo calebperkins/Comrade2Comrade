@@ -9,6 +9,7 @@ import seda.sandStorm.api.QueueElementIF;
 
 import c2c.events.*;
 import c2c.payloads.*;
+import c2c.utilities.MapReduceStage;
 import c2c.utilities.WorkerTable;
 
 import bamboo.api.*;

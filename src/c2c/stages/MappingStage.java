@@ -16,6 +16,7 @@ import c2c.payloads.JobStatus;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
+import c2c.utilities.MapReduceStage;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
