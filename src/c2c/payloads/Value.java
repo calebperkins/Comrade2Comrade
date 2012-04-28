@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.Random;
 
 import ostore.util.InputBuffer;
@@ -18,7 +17,6 @@ public class Value implements QuickSerializable {
 	private static final Random rand = new Random();
 	private static final String DELIMITER = ":";
 	public static final Charset CHARSET = Charset.forName("UTF-8");
-	private static final CharsetDecoder decoder = CHARSET.newDecoder();
 
 	public Value(String value, boolean fresh) {
 		this.value = value;
@@ -31,7 +29,7 @@ public class Value implements QuickSerializable {
 	}
 
 	public Value(ByteBuffer in) throws CharacterCodingException {
-		String[] raw = decoder.decode(in).toString().split(DELIMITER, 2);
+		String[] raw = CHARSET.newDecoder().decode(in).toString().split(DELIMITER, 2);
 		version = Integer.parseInt(raw[0]);
 		value = raw[1];
 	}
