@@ -31,8 +31,7 @@ public final class MappingStage extends MapReduceStage {
 	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
 
 	private final Map<String, RemoteJob> jobs = new HashMap<String, RemoteJob>();
-	private boolean working; // Job active?
-
+	
 	private final ExecutorService pool = Executors.newCachedThreadPool();
 
 	public static final long app_id = bamboo.router.Router
@@ -70,26 +69,27 @@ public final class MappingStage extends MapReduceStage {
 		final KeyValue kv = (KeyValue) event.payload;
 		final RemoteJob job = getJob(kv.key.domain, event.src);
 
-		// Notify the master that we're now working
-		working = true;
-		acore.registerTimer(10, new Runnable() {
-			public void run() {
-				if (working) {
-					dispatchTo(event.src, MasterStage.app_id,
-							new JobStatus(kv.key.domain, false, true));
-					acore.registerTimer(1000, this);
-				}
-			}
-		});
-
 		logger.info("Mapping " + kv.key);
 
 		// The user's map function may be blocking so start a new thread.
 		pool.execute(new Runnable() {
-
+			boolean working = true;
+			
 			@Override
 			public void run() {
 				final Collector c = new Collector(kv.key);
+				
+				// Notify the master that we're now working
+				acore.registerTimer(10, new Runnable() {
+					public void run() {
+						if (working) {
+							dispatchTo(event.src, MasterStage.app_id,
+									new JobStatus(kv.key.domain, false, true));
+							acore.registerTimer(1000, this);
+						}
+					}
+				});
+				
 				job.getMapper().map(kv.key.data, kv.value, c);
 
 				// Get back to main thread

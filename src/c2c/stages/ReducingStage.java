@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import c2c.payloads.IntermediateKeyValue;
+import c2c.payloads.JobStatus;
 import c2c.payloads.KeyValue;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.Value;
@@ -112,11 +113,26 @@ public final class ReducingStage extends MapReduceStage {
 	 */
 	private void performReduce(final DhtValues total) {
 		final Reducer reducer = jobs.get(total.key.domain).getReducer();
+		final BigInteger src = jobs.get(total.key.domain).getMaster();
+		
 		pool.execute(new Runnable() {
-
+			boolean working = true;
+			
 			@Override
 			public void run() {
 				final Collector c = new Collector(total.key);
+				
+				acore.register_timer(10, new Runnable() {
+					public void run() {
+						if (working) {
+							dispatchTo(src , PartitioningStage.app_id, 
+									new JobStatus(total.key.domain + "::" + total.key.data,
+										false, false));
+							acore.register_timer(1000, this);
+						}
+					}
+				});
+				
 				reducer.reduce(total.key.data, total, c);
 
 				// Get back to main thread
@@ -124,6 +140,10 @@ public final class ReducingStage extends MapReduceStage {
 
 					@Override
 					public void run() {
+						working = false;
+						dispatchTo(src , PartitioningStage.app_id,
+								new JobStatus(total.key.domain + "::" + total.key.data,
+										false, true));
 						c.flush();
 					}
 				});

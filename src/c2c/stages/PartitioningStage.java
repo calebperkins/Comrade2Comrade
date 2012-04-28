@@ -5,9 +5,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.AsyncAppender;
+
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
 import c2c.utilities.MapReduceStage;
+import c2c.utilities.WorkerTable;
 import c2c.events.*;
 
 import seda.sandStorm.api.*;
@@ -31,6 +34,9 @@ public final class PartitioningStage extends MapReduceStage {
 	// What mappers for an original input key have completed
 	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
 
+	// Reducers that are underway
+	private final WorkerTable reducers = new WorkerTable();
+	
 	public PartitioningStage() throws Exception {
 		super(MappingUnderway.class, Dht.GetResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
@@ -40,11 +46,23 @@ public final class PartitioningStage extends MapReduceStage {
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) {
-			KeyPayload k = (KeyPayload) ((BambooRouteDeliver) event).payload;
-			completed.get(k.domain).add(k.data);
-			// Mapping is done. Start reducing.
-			if (completed.get(k.domain).size() == expected.get(k.domain)) {
-				dispatchGet(KeyPayload.intermediateKeys(k.domain));
+			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
+			if (deliver.payload instanceof KeyPayload) {
+				KeyPayload k = (KeyPayload) deliver.payload;
+				completed.get(k.domain).add(k.data);
+				// Mapping is done. Start reducing.
+				if (completed.get(k.domain).size() == expected.get(k.domain)) {
+					dispatchGet(KeyPayload.intermediateKeys(k.domain));
+				}
+			} else if (deliver.payload instanceof JobStatus) {
+				JobStatus status = (JobStatus) deliver.payload;
+				if (!status.mapper) {
+					if (status.done) {
+						reducers.removeJob(status.domain);
+					} else {
+						reducers.addJob(status.domain);
+					}
+				}
 			}
 		} else if (event instanceof MappingUnderway) {
 			MappingUnderway mapping = (MappingUnderway) event;
@@ -73,7 +91,21 @@ public final class PartitioningStage extends MapReduceStage {
 			dispatch(new ReducingUnderway(total.key.domain, total.size()));
 			for (String key : total) {
 				KeyPayload redKey = new KeyPayload(total.key.domain, key);
+				reducers.addJob(total.key.domain + "::" + key);
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
+				
+				acore.register_timer(1000, new Runnable() {
+					public void run() {
+						for (String failed : reducers.scan()) {
+							String[] dandk = failed.split("::");
+							
+							KeyPayload redKey = new KeyPayload(dandk[0], dandk[1]);
+							reducers.addJob(failed);
+							dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
+							acore.register_timer(1000, this);
+						}
+					}
+				});
 			}
 		}
 	}
