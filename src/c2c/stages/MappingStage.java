@@ -17,6 +17,7 @@ import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
 import c2c.utilities.MapReduceStage;
+import c2c.utilities.RemoteJob;
 
 import seda.sandStorm.api.*;
 import bamboo.api.*;
@@ -25,25 +26,14 @@ import bamboo.dht.Dht.PutResp;
 import bamboo.dht.bamboo_stat;
 
 public final class MappingStage extends MapReduceStage {
-	private final ClassLoader classLoader = MappingStage.class.getClassLoader();
 
 	// Here KeyPayload corresponds to a mapper key
 	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
 
-	private final Map<String, Job> jobs = new HashMap<String, MappingStage.Job>();
+	private final Map<String, RemoteJob> jobs = new HashMap<String, RemoteJob>();
 	private boolean working; // Job active?
 
 	private final ExecutorService pool = Executors.newCachedThreadPool();
-
-	private class Job {
-		public final BigInteger master;
-		public final Mapper mapper;
-
-		public Job(String domain, BigInteger master) throws Exception {
-			mapper = (Mapper) classLoader.loadClass(domain).newInstance();
-			this.master = master;
-		}
-	}
 
 	public static final long app_id = bamboo.router.Router
 			.app_id(MappingStage.class);
@@ -64,10 +54,10 @@ public final class MappingStage extends MapReduceStage {
 		}
 	}
 
-	private Job getJob(String domain, BigInteger master) {
+	private RemoteJob getJob(String domain, BigInteger master) {
 		if (!jobs.containsKey(domain)) {
 			try {
-				jobs.put(domain, new Job(domain, master));
+				jobs.put(domain, new RemoteJob(domain, master));
 			} catch (Exception e) {
 				BUG(e);
 			}
@@ -77,7 +67,7 @@ public final class MappingStage extends MapReduceStage {
 
 	private void handleMapRequest(final BambooRouteDeliver event) {
 		final KeyValue kv = (KeyValue) event.payload;
-		final Job job = getJob(kv.key.domain, event.src);
+		final RemoteJob job = getJob(kv.key.domain, event.src);
 
 		// Notify the master that we're now working
 		working = true;
@@ -99,7 +89,7 @@ public final class MappingStage extends MapReduceStage {
 			@Override
 			public void run() {
 				final Collector c = new Collector(kv.key);
-				job.mapper.map(kv.key.data, kv.value, c);
+				job.getMapper().map(kv.key.data, kv.value, c);
 
 				// Get back to main thread
 				acore.registerTimer(0, new Runnable() {
@@ -123,7 +113,7 @@ public final class MappingStage extends MapReduceStage {
 		if (response.result == bamboo_stat.BAMBOO_OK) {
 			remaining.put(kv.creator, remaining.get(kv.creator) - 1);
 			if (remaining.get(kv.creator) == 0) {
-				dispatchTo(jobs.get(kv.key.domain).master, PartitioningStage.app_id, kv.creator);
+				dispatchTo(jobs.get(kv.key.domain).getMaster(), PartitioningStage.app_id, kv.creator);
 			}
 		} else {
 			logger.debug("Repeating put...");

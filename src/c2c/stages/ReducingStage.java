@@ -22,15 +22,14 @@ import c2c.payloads.KeyPayload;
 import c2c.payloads.Value;
 import c2c.utilities.DhtValues;
 import c2c.utilities.MapReduceStage;
+import c2c.utilities.RemoteJob;
 
 public final class ReducingStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(ReducingStage.class);
-	private final ClassLoader classLoader = ReducingStage.class
-			.getClassLoader();
-	private Map<String, Reducer> reducers = new HashMap<String, Reducer>();
 	private Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
-	private Map<String, BigInteger> masters = new HashMap<String, BigInteger>();
+	
+	private final Map<String, RemoteJob> jobs = new HashMap<String, RemoteJob>();
 	
 	// Reducer 
 	private final Map<KeyPayload, Integer> remaining = new HashMap<KeyPayload, Integer>();
@@ -41,14 +40,22 @@ public final class ReducingStage extends MapReduceStage {
 		super(KeyPayload.class, Dht.GetResp.class, Dht.PutResp.class);
 		ostore.util.TypeTable.register_type(KeyValue.class);
 	}
+	
+	private RemoteJob getJob(String domain, BigInteger master) {
+		if (!jobs.containsKey(domain)) {
+			try {
+				jobs.put(domain, new RemoteJob(domain, master));
+			} catch (Exception e) {
+				BUG(e);
+			}
+		}
+		return jobs.get(domain);
+	}
 
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) {
-			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
-			KeyPayload payload = (KeyPayload) deliver.payload;
-			masters.put(payload.domain, deliver.src);
-			handleReduceRequest(payload);
+			handleReduceRequest((BambooRouteDeliver) event);
 		} else if (event instanceof Dht.GetResp) {
 			handleGetResponse((GetResp) event);
 		} else if (event instanceof Dht.PutResp) {
@@ -61,9 +68,9 @@ public final class ReducingStage extends MapReduceStage {
 	private void handlePutResponse(Dht.PutResp resp) {
 		IntermediateKeyValue kv = (IntermediateKeyValue) resp.user_data;
 		if (resp.result == bamboo_stat.BAMBOO_OK) {
-			dispatchTo(masters.get(kv.key.domain), MasterStage.app_id, new KeyValue(kv.key, kv.value.value)); // TODO: remove
+			dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new KeyValue(kv.key, kv.value.value)); // TODO: remove
 			if (remaining.put(kv.key, remaining.get(kv.key) - 1) == 1) {
-				dispatchTo(masters.get(kv.key.domain), MasterStage.app_id,
+				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id,
 						kv.key); // tell master we are done
 			}
 		} else {
@@ -76,18 +83,11 @@ public final class ReducingStage extends MapReduceStage {
 		}
 	}
 
-	private void handleReduceRequest(KeyPayload payload) {
+	private void handleReduceRequest(BambooRouteDeliver deliver) {
+		KeyPayload payload = (KeyPayload) deliver.payload;
+		getJob(payload.domain, deliver.src);
 		logger.info("Reducing " + payload);
 		dispatchGet(payload);
-		if (!reducers.containsKey(payload.domain)) {
-			try {
-				Reducer r = (Reducer) classLoader.loadClass(payload.domain)
-						.newInstance();
-				reducers.put(payload.domain, r);
-			} catch (Exception e) {
-				BUG(e);
-			}
-		}
 	}
 
 	private void handleGetResponse(GetResp event) {
@@ -110,7 +110,7 @@ public final class ReducingStage extends MapReduceStage {
 	 * @param total
 	 */
 	private void performReduce(final DhtValues total) {
-		final Reducer reducer = reducers.get(total.key.domain);
+		final Reducer reducer = jobs.get(total.key.domain).getReducer();
 		pool.execute(new Runnable() {
 			
 			@Override
