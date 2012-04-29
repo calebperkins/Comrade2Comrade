@@ -1,14 +1,13 @@
 package c2c.stages;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import seda.sandStorm.api.QueueElementIF;
 
 import c2c.events.*;
 import c2c.payloads.*;
+import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
 import c2c.utilities.WorkerTable;
 
@@ -24,8 +23,8 @@ public final class MasterStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(MasterStage.class);
 	
-	private final Map<String, Integer> expected = new HashMap<String, Integer>();
-	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
+	//private final Map<String, Integer> expected = new HashMap<String, Integer>();
+	//private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
 	
 	// KV's have to be stored in case we need to reissue a job
 	private Map<String, KeyValue> jobs = new HashMap<String, KeyValue>();
@@ -40,9 +39,9 @@ public final class MasterStage extends MapReduceStage {
 	
 	private void handleReducerDone(KeyPayload k) {
 		logger.debug("Reducer done for " + k);
-		Set<String> comp = completed.get(k.domain);
-		comp.add(k.data);
-		if (comp.size() == expected.get(k.domain)) {
+		LocalJob job = LocalJob.get(k.domain);
+		job.reductionDoneFor(k.data);
+		if (job.reducingComplete()) {
 			dispatch(new JobDone(k.domain));
 		}
 	}
@@ -53,11 +52,11 @@ public final class MasterStage extends MapReduceStage {
 	}
 	
 	private void handleReducingUnderway(ReducingUnderway event) {
-		expected.put(event.domain, event.reducers);
-		completed.put(event.domain, new HashSet<String>());
+		LocalJob.get(event.domain).nowReducing(event.reducers);
 	}
 	
 	private void handleJobRequest(JobRequest req) {
+		LocalJob.put(req.domain, new LocalJob(req.pairs));
 		dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 		for (KeyValue pair : req.pairs) {
 			workers.addJob(pair.key.domain);
@@ -69,7 +68,7 @@ public final class MasterStage extends MapReduceStage {
 		}
 		
 		// Schedule rescan of worker table
-		acore.register_timer(4500, rescanTable);
+		acore.registerTimer(4500, rescanTable);
 	}
 	
 	private void handleJobStatus(JobStatus status) {
@@ -110,12 +109,12 @@ public final class MasterStage extends MapReduceStage {
 	private Runnable rescanTable = new Runnable() {
 		@Override
 		public void run() {
-			// Redispatch all failed jobs 
+			// Re-dispatch all failed jobs 
 			for (String failed : workers.scan()) {
 				KeyValue pair = jobs.get(failed);
 				assert(failed.equals(pair.key.domain));
 				
-				// Readd as current
+				// Re-add as current
 				workers.addJob(failed);
 				dispatchTo(pair.key.toNode(), MappingStage.app_id,
 						pair);

@@ -53,7 +53,7 @@
 	<target name="test" description="Test with a WordCount." depends="compile">
 		<java fork="true" failonerror="true" maxmemory="128m" classname="c2c.stages.ClientStage">
 			<sysproperty key="java.library.path" value="${syslib}" />
-		    <arg value="localhost:3200" />
+		    <arg value="localhost:3204" />
 		    <arg value="demos.WordCount" />
 		    <arg value="words.json" />
 			<arg value="/tmp/results.json" />

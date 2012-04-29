@@ -1,12 +1,11 @@
 package c2c.stages;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
+import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
 import c2c.utilities.WorkerTable;
 import c2c.events.*;
@@ -25,12 +24,8 @@ import bamboo.dht.Dht;
 public final class PartitioningStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(PartitioningStage.class);
-	private final Map<String, Integer> expected = new HashMap<String, Integer>();
 
 	private final Map<String, DhtValues> value_buffer = new HashMap<String, DhtValues>();
-
-	// What mappers for an original input key have completed
-	private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
 
 	// Reducers that are underway
 	private final WorkerTable reducers = new WorkerTable();
@@ -52,16 +47,15 @@ public final class PartitioningStage extends MapReduceStage {
 	}
 	
 	private void handleMapperDone(KeyPayload k) {
-		completed.get(k.domain).add(k.data);
+		LocalJob job = LocalJob.get(k.domain);
+		job.reductionDoneFor(k.data);
 		// Mapping is done. Start reducing.
-		if (completed.get(k.domain).size() == expected.get(k.domain)) {
+		if (job.mappingComplete()) {
 			dispatchGet(KeyPayload.intermediateKeys(k.domain));
 		}
 	}
 	
 	private void handleMappingStarted(MappingUnderway mapping) {
-		expected.put(mapping.domain, mapping.expected);
-		completed.put(mapping.domain, new HashSet<String>());
 	}
 
 	@Override
