@@ -40,32 +40,41 @@ public final class PartitioningStage extends MapReduceStage {
 		ostore.util.TypeTable.register_type(KeyValue.class);
 		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
+	
+	private void handleJobStatus(JobStatus status) {
+		if (!status.mapper) {
+			if (status.done) {
+				reducers.removeJob(status.domain);
+			} else {
+				reducers.addJob(status.domain);
+			}
+		}
+	}
+	
+	private void handleMapperDone(KeyPayload k) {
+		completed.get(k.domain).add(k.data);
+		// Mapping is done. Start reducing.
+		if (completed.get(k.domain).size() == expected.get(k.domain)) {
+			dispatchGet(KeyPayload.intermediateKeys(k.domain));
+		}
+	}
+	
+	private void handleMappingStarted(MappingUnderway mapping) {
+		expected.put(mapping.domain, mapping.expected);
+		completed.put(mapping.domain, new HashSet<String>());
+	}
 
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
 			if (deliver.payload instanceof KeyPayload) {
-				KeyPayload k = (KeyPayload) deliver.payload;
-				completed.get(k.domain).add(k.data);
-				// Mapping is done. Start reducing.
-				if (completed.get(k.domain).size() == expected.get(k.domain)) {
-					dispatchGet(KeyPayload.intermediateKeys(k.domain));
-				}
+				handleMapperDone((KeyPayload) deliver.payload);
 			} else if (deliver.payload instanceof JobStatus) {
-				JobStatus status = (JobStatus) deliver.payload;
-				if (!status.mapper) {
-					if (status.done) {
-						reducers.removeJob(status.domain);
-					} else {
-						reducers.addJob(status.domain);
-					}
-				}
+				handleJobStatus((JobStatus) deliver.payload);
 			}
 		} else if (event instanceof MappingUnderway) {
-			MappingUnderway mapping = (MappingUnderway) event;
-			expected.put(mapping.domain, mapping.expected);
-			completed.put(mapping.domain, new HashSet<String>());
+			handleMappingStarted((MappingUnderway) event);
 		} else if (event instanceof Dht.GetResp) {
 			handleIntermediateValues((Dht.GetResp) event);
 		} else {
