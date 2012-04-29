@@ -25,6 +25,7 @@ public class JobStatus implements QuickSerializable {
 		out.add(done); out.add(mapper);
 	}
 	
+	@Override
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Job key=");

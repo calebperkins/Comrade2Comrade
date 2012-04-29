@@ -122,13 +122,14 @@ public final class ReducingStage extends MapReduceStage {
 			public void run() {
 				final Collector c = new Collector(total.key);
 				
-				acore.register_timer(10, new Runnable() {
+				acore.registerTimer(10, new Runnable() {
+					@Override
 					public void run() {
 						if (working) {
 							dispatchTo(src , PartitioningStage.app_id, 
 									new JobStatus(total.key.domain + "::" + total.key.data,
 										false, false));
-							acore.register_timer(1000, this);
+							acore.registerTimer(1000, this);
 						}
 					}
 				});

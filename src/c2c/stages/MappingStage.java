@@ -81,6 +81,7 @@ public final class MappingStage extends MapReduceStage {
 				
 				// Notify the master that we're now working
 				acore.registerTimer(10, new Runnable() {
+					@Override
 					public void run() {
 						if (working) {
 							dispatchTo(event.src, MasterStage.app_id,

@@ -102,6 +102,7 @@ public final class MasterStage extends MapReduceStage {
 	}
 	
 	private Runnable rescanTable = new Runnable() {
+		@Override
 		public void run() {
 			// Redispatch all failed jobs 
 			for (String failed : workers.scan()) {

@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.AsyncAppender;
-
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
 import c2c.utilities.MapReduceStage;
@@ -94,7 +92,8 @@ public final class PartitioningStage extends MapReduceStage {
 				reducers.addJob(total.key.domain + "::" + key);
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
 				
-				acore.register_timer(1000, new Runnable() {
+				acore.registerTimer(1000, new Runnable() {
+					@Override
 					public void run() {
 						for (String failed : reducers.scan()) {
 							String[] dandk = failed.split("::");
@@ -102,7 +101,7 @@ public final class PartitioningStage extends MapReduceStage {
 							KeyPayload redKey = new KeyPayload(dandk[0], dandk[1]);
 							reducers.addJob(failed);
 							dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
-							acore.register_timer(1000, this);
+							acore.registerTimer(1000, this);
 						}
 					}
 				});
