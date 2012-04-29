@@ -13,7 +13,8 @@ public class RemoteJob {
 	private static final ClassLoader classLoader = RemoteJob.class.getClassLoader();
 
 	public RemoteJob(String domain, BigInteger master) throws Exception {
-		app = (MapReduceApplication) classLoader.loadClass(domain).newInstance();
+		String klass = domain.split(":", 2)[0];
+		app = (MapReduceApplication) classLoader.loadClass(klass).newInstance();
 		this.master = master;
 	}
 	

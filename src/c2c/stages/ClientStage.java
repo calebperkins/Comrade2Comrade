@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Random;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -38,6 +40,7 @@ public class ClientStage extends MapReduceStage {
 	private static String output_file;
 
 	private JsonWriter writer;
+	private final Random rand;
 
 	public static void main(String[] args) throws Exception {
 		if (args.length == 2 || args.length > 4) {
@@ -82,6 +85,8 @@ public class ClientStage extends MapReduceStage {
 
 	public ClientStage() throws Exception {
 		super(KeyValue.class, JobDone.class);
+		
+		rand = new Random();
 
 		// Configure built-in stages to be less noisy
 		Logger.getLogger(bamboo.lss.ASyncCoreImpl.class).setLevel(Level.WARN);
@@ -94,7 +99,7 @@ public class ClientStage extends MapReduceStage {
 	public void init(ConfigDataIF config) throws Exception {
 		super.init(config);
 		if (class_name != null) {
-			JobRequest req = new JobRequest(class_name);
+			JobRequest req = new JobRequest(class_name + ":" + rand.nextInt());
 			parseInputFile(req);
 
 			writer = new JsonWriter(new OutputStreamWriter(
