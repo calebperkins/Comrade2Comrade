@@ -1,31 +1,42 @@
 package c2c.utilities;
 
 import java.util.*;
+import java.util.Map.Entry;
+
 import org.joda.time.*;
 
+import c2c.payloads.KeyPayload;
+
+/**
+ * Keeps track of remote nodes working on a particular input key.
+ * 
+ * This need not be synchronized, because only the main thread should be
+ * adding/removing/scanning workers in this table!
+ * 
+ */
 public class WorkerTable {
-	// Number of seconds to wait before a missing job is killed
-	protected static final Duration TIMEOUT = new Duration(10 * 1000);
-	protected Map<String, DateTime> jobs = new HashMap<String, DateTime>();
-	
-	public synchronized void addJob(String job) {
-		jobs.put(job, new DateTime());
+	public static final Duration TIMEOUT = new Duration(10 * 1000);
+	private Map<KeyPayload, DateTime> pending = new HashMap<KeyPayload, DateTime>();
+
+	public void add(KeyPayload key) {
+		pending.put(key, new DateTime());
 	}
-	
-	public synchronized void removeJob(String job) {
-		jobs.remove(job);
+
+	public void remove(KeyPayload key) {
+		pending.remove(key);
 	}
-	
-	public synchronized Iterable<String> scan() {
+
+	public Iterable<KeyPayload> getFailed() {
 		DateTime now = new DateTime();
-		LinkedList<String> result = new LinkedList<String>();
-		
-		for (String job : jobs.keySet()) {
-			if (jobs.get(job).plus(TIMEOUT).compareTo(now) < 0) {
-				result.add(job);
+		LinkedList<KeyPayload> failed = new LinkedList<KeyPayload>();
+
+		for (Entry<KeyPayload, DateTime> entry : pending.entrySet()) {
+			if (entry.getValue().plus(TIMEOUT).compareTo(now) < 0) {
+				failed.add(entry.getKey());
 			}
 		}
-		
-		return result;
+
+		return failed;
+
 	}
 }

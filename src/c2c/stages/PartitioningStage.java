@@ -1,17 +1,15 @@
 package c2c.stages;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
 import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
+import c2c.utilities.WorkerTable;
 import c2c.events.*;
 
 import seda.sandStorm.api.*;
@@ -34,33 +32,7 @@ public final class PartitioningStage extends MapReduceStage {
 	protected static final Duration REDUCER_TIMEOUT = new Duration(10 * 1000);
 
 	// Reducers that are underway
-	private final ReducerTable reducers = new ReducerTable();
-	
-	private static class ReducerTable {
-		private Map<KeyPayload, DateTime> pending = new HashMap<KeyPayload, DateTime>();
-		
-		public synchronized void add(KeyPayload key) {
-			pending.put(key, new DateTime());
-		}
-		
-		public synchronized void remove(KeyPayload key) {
-			pending.remove(key);
-		}
-		
-		public synchronized Iterable<KeyPayload> getFailed() {
-			DateTime now = new DateTime();
-			LinkedList<KeyPayload> result = new LinkedList<KeyPayload>();
-			
-			for (Entry<KeyPayload, DateTime> entry : pending.entrySet()) {
-				if (entry.getValue().plus(REDUCER_TIMEOUT).compareTo(now) < 0) {
-					result.add(entry.getKey());
-				}
-			}
-			
-			return result;
-			
-		}
-	}
+	private final WorkerTable reducers = new WorkerTable();
 	
 	public PartitioningStage() throws Exception {
 		super(MappingUnderway.class, Dht.GetResp.class);

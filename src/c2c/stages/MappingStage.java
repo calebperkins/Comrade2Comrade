@@ -134,7 +134,7 @@ public final class MappingStage extends MapReduceStage {
 	}
 
 	private class Collector implements OutputCollector {
-		private KeyPayload mapping_key;
+		private final KeyPayload mapping_key; // the original input key for this mapping
 
 		private Set<String> keys = new HashSet<String>();
 		private Collection<KeyValue> keyvalues = new LinkedList<KeyValue>();

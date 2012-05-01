@@ -1,12 +1,7 @@
 package c2c.stages;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 
 import seda.sandStorm.api.QueueElementIF;
 
@@ -14,6 +9,7 @@ import c2c.events.*;
 import c2c.payloads.*;
 import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
+import c2c.utilities.WorkerTable;
 
 import bamboo.api.*;
 
@@ -31,32 +27,7 @@ public final class MasterStage extends MapReduceStage {
 	private Map<KeyPayload, String> keyvalues = new HashMap<KeyPayload, String>();
 	
 	// When was the last time we heard from a worker?
-	private Mappings mappers = new Mappings();
-	
-	protected static final Duration MAPPER_TIMEOUT = new Duration(10 * 1000);
-	
-	private static class Mappings {
-		private Map<KeyPayload, DateTime> pending = new HashMap<KeyPayload, DateTime>();
-		
-		public void add(KeyPayload key) {
-			pending.put(key, new DateTime());
-		}
-		
-		public void remove(KeyPayload key) {
-			pending.remove(key);
-		}
-		
-		public Iterable<KeyPayload> getFailed() {
-			DateTime now = new DateTime();
-			LinkedList<KeyPayload> failed = new LinkedList<KeyPayload>();
-			for (Entry<KeyPayload, DateTime> entry : pending.entrySet()) {
-				if (entry.getValue().plus(MAPPER_TIMEOUT).compareTo(now) < 0) {
-					failed.add(entry.getKey());
-				}
-			}
-			return failed;
-		}
-	}
+	private final WorkerTable mappers = new WorkerTable();
 
 	public MasterStage() throws Exception {
 		super(JobRequest.class, ReducingUnderway.class);
