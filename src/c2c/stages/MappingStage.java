@@ -39,8 +39,6 @@ public final class MappingStage extends MapReduceStage {
 
 	public MappingStage() throws Exception {
 		super(Dht.PutResp.class);
-		ostore.util.TypeTable.register_type(KeyValue.class);
-		ostore.util.TypeTable.register_type(JobStatus.class);
 	}
 
 	@Override
@@ -85,7 +83,7 @@ public final class MappingStage extends MapReduceStage {
 					public void run() {
 						if (working) {
 							dispatchTo(event.src, MasterStage.app_id,
-									new JobStatus(kv.key.domain, false, true));
+									new JobStatus(kv.key, false, true));
 							acore.registerTimer(1000, this);
 						}
 					}
@@ -103,7 +101,7 @@ public final class MappingStage extends MapReduceStage {
 
 						// Tell the master that we're done
 						dispatchTo(event.src, MasterStage.app_id,
-								new JobStatus(kv.key.domain, true, true));
+								new JobStatus(kv.key, true, true));
 					}
 				});
 			}

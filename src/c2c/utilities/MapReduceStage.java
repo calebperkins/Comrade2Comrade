@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import c2c.payloads.JobStatus;
 import c2c.payloads.KeyPayload;
 import c2c.payloads.KeyValue;
 import c2c.payloads.Value;
@@ -54,6 +55,9 @@ public abstract class MapReduceStage extends StandardStage {
 		for (int i = 0; i < events.length; i++) {
 			event_types[i + 3] = events[i];
 		}
+		ostore.util.TypeTable.register_type(JobStatus.class);
+		ostore.util.TypeTable.register_type(KeyValue.class);
+		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 
 	@Override

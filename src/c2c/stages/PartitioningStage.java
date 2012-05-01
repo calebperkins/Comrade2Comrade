@@ -32,16 +32,14 @@ public final class PartitioningStage extends MapReduceStage {
 	
 	public PartitioningStage() throws Exception {
 		super(MappingUnderway.class, Dht.GetResp.class);
-		ostore.util.TypeTable.register_type(KeyValue.class);
-		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 	
 	private void handleJobStatus(JobStatus status) {
 		if (!status.mapper) {
 			if (status.done) {
-				reducers.removeJob(status.domain);
+				reducers.removeJob(status.key.data);
 			} else {
-				reducers.addJob(status.domain);
+				reducers.addJob(status.key.data);
 			}
 		}
 	}
@@ -83,7 +81,7 @@ public final class PartitioningStage extends MapReduceStage {
 		} else {
 			value_buffer.put(resp.key.domain, resp);
 		}
-		DhtValues total = value_buffer.get(resp.key.domain);
+		final DhtValues total = value_buffer.get(resp.key.domain);
 		if (total.hasMore()) {
 			dispatchGet(total.key, total.getPlacemark());
 			logger.debug("There were more values...");
@@ -101,7 +99,7 @@ public final class PartitioningStage extends MapReduceStage {
 						for (String failed : reducers.scan()) {
 							String[] dandk = failed.split("::");
 							
-							KeyPayload redKey = new KeyPayload(dandk[0], dandk[1]);
+							KeyPayload redKey = new KeyPayload(total.key.domain, dandk[1]);
 							reducers.addJob(failed);
 							dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
 							acore.registerTimer(1000, this);

@@ -39,8 +39,6 @@ public final class ReducingStage extends MapReduceStage {
 
 	public ReducingStage() throws Exception {
 		super(Dht.GetResp.class, Dht.PutResp.class);
-		ostore.util.TypeTable.register_type(KeyValue.class);
-		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 
 	private RemoteJob getJob(String domain, BigInteger master) {
@@ -126,9 +124,8 @@ public final class ReducingStage extends MapReduceStage {
 					@Override
 					public void run() {
 						if (working) {
-							dispatchTo(src , PartitioningStage.app_id, 
-									new JobStatus(total.key.domain + "::" + total.key.data,
-										false, false));
+							dispatchTo(src, PartitioningStage.app_id, 
+									new JobStatus(total.key, false, false));
 							acore.registerTimer(1000, this);
 						}
 					}
@@ -142,9 +139,7 @@ public final class ReducingStage extends MapReduceStage {
 					@Override
 					public void run() {
 						working = false;
-						dispatchTo(src , PartitioningStage.app_id,
-								new JobStatus(total.key.domain + "::" + total.key.data,
-										false, true));
+						dispatchTo(src, PartitioningStage.app_id, new JobStatus(total.key, false, true));
 						c.flush();
 					}
 				});

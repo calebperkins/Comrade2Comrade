@@ -33,8 +33,6 @@ public final class MasterStage extends MapReduceStage {
 
 	public MasterStage() throws Exception {
 		super(JobRequest.class, ReducingUnderway.class);
-		ostore.util.TypeTable.register_type(KeyValue.class);
-		ostore.util.TypeTable.register_type(KeyPayload.class);
 	}
 	
 	private void handleReducerDone(KeyPayload k) {
@@ -75,11 +73,11 @@ public final class MasterStage extends MapReduceStage {
 		if (status.mapper) {
 			if (status.done) {
 				// Mapper is done - remove from tables
-				workers.removeJob(status.domain);
-				jobs.remove(status.domain);
+				workers.removeJob(status.key.data);
+				jobs.remove(status.key.data);
 			} else {
 				// Mapper still working - refresh in table
-				workers.addJob(status.domain);
+				workers.addJob(status.key.data);
 			}
 		}
 	}
