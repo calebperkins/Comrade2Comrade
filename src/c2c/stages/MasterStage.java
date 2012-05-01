@@ -1,7 +1,12 @@
 package c2c.stages;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 import seda.sandStorm.api.QueueElementIF;
 
@@ -9,7 +14,6 @@ import c2c.events.*;
 import c2c.payloads.*;
 import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
-import c2c.utilities.WorkerTable;
 
 import bamboo.api.*;
 
@@ -23,13 +27,36 @@ public final class MasterStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(MasterStage.class);
 	
-	//private final Map<String, Integer> expected = new HashMap<String, Integer>();
-	//private final Map<String, Set<String>> completed = new HashMap<String, Set<String>>();
-	
 	// KV's have to be stored in case we need to reissue a job
-	private Map<String, KeyValue> jobs = new HashMap<String, KeyValue>();
+	private Map<KeyPayload, String> keyvalues = new HashMap<KeyPayload, String>();
+	
 	// When was the last time we heard from a worker?
-	private WorkerTable workers = new WorkerTable();
+	private Mappings mappers = new Mappings();
+	
+	protected static final Duration MAPPER_TIMEOUT = new Duration(10 * 1000);
+	
+	private static class Mappings {
+		private Map<KeyPayload, DateTime> pending = new HashMap<KeyPayload, DateTime>();
+		
+		public void add(KeyPayload key) {
+			pending.put(key, new DateTime());
+		}
+		
+		public void remove(KeyPayload key) {
+			pending.remove(key);
+		}
+		
+		public Iterable<KeyPayload> getFailed() {
+			DateTime now = new DateTime();
+			LinkedList<KeyPayload> failed = new LinkedList<KeyPayload>();
+			for (Entry<KeyPayload, DateTime> entry : pending.entrySet()) {
+				if (entry.getValue().plus(MAPPER_TIMEOUT).compareTo(now) < 0) {
+					failed.add(entry.getKey());
+				}
+			}
+			return failed;
+		}
+	}
 
 	public MasterStage() throws Exception {
 		super(JobRequest.class, ReducingUnderway.class);
@@ -56,9 +83,10 @@ public final class MasterStage extends MapReduceStage {
 	private void handleJobRequest(JobRequest req) {
 		LocalJob.put(req.domain, new LocalJob(req.pairs));
 		dispatch(new MappingUnderway(req.domain, req.pairs.size()));
+		
 		for (KeyValue pair : req.pairs) {
-			workers.addJob(pair.key.domain);
-			jobs.put(pair.key.domain, pair);
+			keyvalues.put(pair.key, pair.value);
+			mappers.add(pair.key);
 			
 			// Distribute to different nodes.
 			dispatchTo(pair.key.toNode(), MappingStage.app_id,
@@ -73,11 +101,11 @@ public final class MasterStage extends MapReduceStage {
 		if (status.mapper) {
 			if (status.done) {
 				// Mapper is done - remove from tables
-				workers.removeJob(status.key.data);
-				jobs.remove(status.key.data);
+				mappers.remove(status.key);
+				keyvalues.remove(status.key);
 			} else {
 				// Mapper still working - refresh in table
-				workers.addJob(status.key.data);
+				mappers.add(status.key);
 			}
 		}
 	}
@@ -108,14 +136,12 @@ public final class MasterStage extends MapReduceStage {
 		@Override
 		public void run() {
 			// Re-dispatch all failed jobs 
-			for (String failed : workers.scan()) {
-				KeyValue pair = jobs.get(failed);
-				assert(failed.equals(pair.key.domain));
+			for (KeyPayload failed : mappers.getFailed()) {
+				KeyValue kv = new KeyValue(failed, keyvalues.get(failed));
 				
 				// Re-add as current
-				workers.addJob(failed);
-				dispatchTo(pair.key.toNode(), MappingStage.app_id,
-						pair);
+				mappers.add(failed);
+				dispatchTo(failed.toNode(), MappingStage.app_id, kv);
 			}
 			
 			// Schedule next rescan
