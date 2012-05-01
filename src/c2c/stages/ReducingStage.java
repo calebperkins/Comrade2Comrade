@@ -139,7 +139,7 @@ public final class ReducingStage extends MapReduceStage {
 					@Override
 					public void run() {
 						working = false;
-						dispatchTo(src, PartitioningStage.app_id, new JobStatus(total.key, false, true));
+						dispatchTo(src, PartitioningStage.app_id, new JobStatus(total.key, true, false));
 						c.flush();
 					}
 				});
