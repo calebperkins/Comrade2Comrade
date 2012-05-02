@@ -28,7 +28,7 @@ import c2c.utilities.RemoteJob;
 public final class ReducingStage extends MapReduceStage {
 	public static final long app_id = bamboo.router.Router
 			.app_id(ReducingStage.class);
-	private Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
+	private final Map<KeyPayload, DhtValues> responses = new HashMap<KeyPayload, DhtValues>();
 
 	private final Map<String, RemoteJob> jobs = new HashMap<String, RemoteJob>();
 
@@ -74,7 +74,7 @@ public final class ReducingStage extends MapReduceStage {
 						kv.key); // tell master we are done
 			}
 		} else {
-			logger.info("Reducer put failed. Retrying...");
+			logger.debug("Reducer put failed. Retrying...");
 			Value v = kv.value;
 			Dht.PutReq req = new Dht.PutReq(kv.key.toNode(), v.toByteBuffer(),
 					v.hash(), true, my_sink, kv, 600,

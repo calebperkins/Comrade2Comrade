@@ -15,7 +15,7 @@ import c2c.payloads.KeyPayload;
  * 
  */
 public class WorkerTable {
-	public static final Duration TIMEOUT = new Duration(10 * 1000);
+	public static final Duration TIMEOUT = new Duration(30 * 1000);
 	private Map<KeyPayload, DateTime> pending = new HashMap<KeyPayload, DateTime>();
 
 	public void add(KeyPayload key) {
@@ -24,6 +24,10 @@ public class WorkerTable {
 
 	public void remove(KeyPayload key) {
 		pending.remove(key);
+	}
+	
+	public int size() {
+		return pending.size();
 	}
 
 	public Iterable<KeyPayload> getFailed() {

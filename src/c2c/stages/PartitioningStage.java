@@ -3,11 +3,8 @@ package c2c.stages;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.joda.time.Duration;
-
 import c2c.payloads.*;
 import c2c.utilities.DhtValues;
-import c2c.utilities.LocalJob;
 import c2c.utilities.MapReduceStage;
 import c2c.utilities.WorkerTable;
 import c2c.events.*;
@@ -29,48 +26,43 @@ public final class PartitioningStage extends MapReduceStage {
 
 	private final Map<String, DhtValues> value_buffer = new HashMap<String, DhtValues>();
 	
-	protected static final Duration REDUCER_TIMEOUT = new Duration(10 * 1000);
-
 	// Reducers that are underway
 	private final WorkerTable reducers = new WorkerTable();
 	
 	public PartitioningStage() throws Exception {
-		super(MappingUnderway.class, Dht.GetResp.class);
+		super(MappingFinished.class, Dht.GetResp.class);
 	}
 	
 	private void handleJobStatus(JobStatus status) {
 		if (!status.mapper) {
 			if (status.done) {
 				reducers.remove(status.key);
+				// TODO reducing finish
+				if (reducers.size() == 0) {
+					logger.info("Reducing finished!");
+				}
 			} else {
 				reducers.add(status.key);
 			}
 		}
 	}
-	
-	private void handleMapperDone(KeyPayload k) {
-		LocalJob job = LocalJob.get(k.domain);
-		job.reductionDoneFor(k.data);
-		// Mapping is done. Start reducing.
-		if (job.mappingComplete()) {
-			dispatchGet(KeyPayload.intermediateKeys(k.domain));
-		}
-	}
-	
-	private void handleMappingStarted(MappingUnderway mapping) {
-	}
 
+	private void handleMappingFinished(MappingFinished event) {
+		logger.info("Mapping finished. Collecting values...");
+		dispatchGet(KeyPayload.intermediateKeys(event.domain));
+	}
+	
 	@Override
 	protected void handleOperationalEvent(QueueElementIF event) {
 		if (event instanceof BambooRouteDeliver) {
 			BambooRouteDeliver deliver = (BambooRouteDeliver) event;
-			if (deliver.payload instanceof KeyPayload) {
-				handleMapperDone((KeyPayload) deliver.payload);
-			} else if (deliver.payload instanceof JobStatus) {
+			if (deliver.payload instanceof JobStatus) {
 				handleJobStatus((JobStatus) deliver.payload);
+			} else {
+				BUG("Unknown payload");
 			}
-		} else if (event instanceof MappingUnderway) {
-			handleMappingStarted((MappingUnderway) event);
+		} else if (event instanceof MappingFinished) {
+			handleMappingFinished((MappingFinished) event);
 		} else if (event instanceof Dht.GetResp) {
 			handleIntermediateValues((Dht.GetResp) event);
 		} else {
@@ -104,7 +96,7 @@ public final class PartitioningStage extends MapReduceStage {
 				public void run() {
 					for (KeyPayload failed : reducers.getFailed()) {
 						reducers.add(failed);
-						logger.fatal("Failed job!");
+						logger.warn("Reducing " + failed + " failed. Retrying...");
 						dispatchTo(failed.toNode(), ReducingStage.app_id, failed);
 					}
 					acore.registerTimer(1000, this);

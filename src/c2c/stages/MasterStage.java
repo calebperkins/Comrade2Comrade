@@ -53,7 +53,6 @@ public final class MasterStage extends MapReduceStage {
 	
 	private void handleJobRequest(JobRequest req) {
 		LocalJob.put(req.domain, new LocalJob(req.pairs));
-		dispatch(new MappingUnderway(req.domain, req.pairs.size()));
 		
 		for (KeyValue pair : req.pairs) {
 			keyvalues.put(pair.key, pair.value);
@@ -74,6 +73,10 @@ public final class MasterStage extends MapReduceStage {
 				// Mapper is done - remove from tables
 				mappers.remove(status.key);
 				keyvalues.remove(status.key);
+				logger.info("Job done for " + status.key);
+				if (keyvalues.isEmpty()) { // TODO
+					dispatch(new MappingFinished(status.key.domain));
+				}
 			} else {
 				// Mapper still working - refresh in table
 				mappers.add(status.key);
@@ -106,8 +109,13 @@ public final class MasterStage extends MapReduceStage {
 	private Runnable rescanTable = new Runnable() {
 		@Override
 		public void run() {
+			logger.debug("Rescanning....");
+			
 			// Re-dispatch all failed jobs 
 			for (KeyPayload failed : mappers.getFailed()) {
+				
+				logger.warn("Mapping failed for " + failed);
+				
 				KeyValue kv = new KeyValue(failed, keyvalues.get(failed));
 				
 				// Re-add as current

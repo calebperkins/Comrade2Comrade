@@ -100,8 +100,8 @@ public final class MappingStage extends MapReduceStage {
 						working = false;
 
 						// Tell the master that we're done
-						dispatchTo(event.src, MasterStage.app_id,
-								new JobStatus(kv.key, true, true));
+						//dispatchTo(event.src, MasterStage.app_id,
+						//		new JobStatus(kv.key, true, true));
 					}
 				});
 			}
@@ -113,7 +113,7 @@ public final class MappingStage extends MapReduceStage {
 		if (response.result == bamboo_stat.BAMBOO_OK) {
 			remaining.put(kv.creator, remaining.get(kv.creator) - 1);
 			if (remaining.get(kv.creator) == 0) {
-				dispatchTo(jobs.get(kv.key.domain).getMaster(), PartitioningStage.app_id, kv.creator);
+				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new JobStatus(kv.creator, true, true));
 			}
 		} else {
 			logger.debug("Repeating put...");

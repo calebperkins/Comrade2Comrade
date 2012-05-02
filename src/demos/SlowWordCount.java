@@ -9,7 +9,7 @@ import c2c.api.OutputCollector;
  *
  */
 public class SlowWordCount implements MapReduceApplication {
-	private static final int WAIT_SECONDS = 20;
+	private static final int WAIT_SECONDS = 10;
 
 	@Override
 	public void map(String key, String value, OutputCollector collector) {
