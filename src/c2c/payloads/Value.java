@@ -6,12 +6,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.util.Random;
 
-import ostore.util.InputBuffer;
-import ostore.util.OutputBuffer;
-import ostore.util.QSException;
-import ostore.util.QuickSerializable;
-
-public class Value implements QuickSerializable {
+public class Value {
 	public final String value;
 	private final int version;
 	private static final Random rand = new Random();
@@ -23,21 +18,10 @@ public class Value implements QuickSerializable {
 		version = fresh ? rand.nextInt() : 0;
 	}
 
-	public Value(InputBuffer in) throws QSException {
-		value = in.nextString();
-		version = in.nextInt();
-	}
-
 	public Value(ByteBuffer in) throws CharacterCodingException {
 		String[] raw = CHARSET.newDecoder().decode(in).toString().split(DELIMITER, 2);
 		version = Integer.parseInt(raw[0]);
 		value = raw[1];
-	}
-
-	@Override
-	public void serialize(OutputBuffer out) {
-		out.add(value);
-		out.add(version);
 	}
 
 	public byte[] hash() {
