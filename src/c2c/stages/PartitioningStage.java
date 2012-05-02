@@ -90,20 +90,22 @@ public final class PartitioningStage extends MapReduceStage {
 				dispatchTo(redKey.toNode(), ReducingStage.app_id, redKey);
 			}
 			
-			acore.registerTimer(1000, new Runnable() {
-				
-				@Override
-				public void run() {
-					for (KeyPayload failed : reducers.getFailed()) {
-						reducers.add(failed);
-						logger.warn("Reducing " + failed + " failed. Retrying...");
-						dispatchTo(failed.toNode(), ReducingStage.app_id, failed);
-					}
-					acore.registerTimer(1000, this);
-				}
-			});
+			acore.registerTimer(1000, retryFailedReducers);
 		}
 	}
+	
+	private Runnable retryFailedReducers = new Runnable() {
+		
+		@Override
+		public void run() {
+			for (KeyPayload failed : reducers.getFailed()) {
+				reducers.add(failed);
+				logger.warn("Reducing " + failed + " failed. Retrying...");
+				dispatchTo(failed.toNode(), ReducingStage.app_id, failed);
+			}
+			acore.registerTimer(1000, retryFailedReducers);
+		}
+	};
 
 	@Override
 	public long getAppID() {

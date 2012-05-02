@@ -64,7 +64,7 @@ public final class MasterStage extends MapReduceStage {
 		}
 		
 		// Schedule rescan of worker table
-		acore.registerTimer(4500, rescanTable);
+		acore.registerTimer(4500, retryFailedMappers);
 	}
 	
 	private void handleJobStatus(JobStatus status) {
@@ -106,7 +106,7 @@ public final class MasterStage extends MapReduceStage {
 		}
 	}
 	
-	private Runnable rescanTable = new Runnable() {
+	private Runnable retryFailedMappers = new Runnable() {
 		@Override
 		public void run() {
 			logger.debug("Rescanning....");
@@ -124,7 +124,7 @@ public final class MasterStage extends MapReduceStage {
 			}
 			
 			// Schedule next rescan
-			acore.registerTimer(4500, rescanTable);
+			acore.registerTimer(4500, retryFailedMappers);
 		}
 	};
 

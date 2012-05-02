@@ -101,6 +101,10 @@ public abstract class MapReduceStage extends StandardStage {
 	 */
 	protected abstract void handleOperationalEvent(QueueElementIF event);
 
+	@Override
+	public final void destroy() {
+	}
+
 	/**
 	 * Get a random node ID
 	 * 
