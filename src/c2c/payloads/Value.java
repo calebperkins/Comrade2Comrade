@@ -10,7 +10,7 @@ public class Value {
 	public final String value;
 	private final int version;
 	private static final Random rand = new Random();
-	private static final String DELIMITER = ":";
+	private static final String DELIMITER = "_";
 	public static final Charset CHARSET = Charset.forName("UTF-8");
 
 	public Value(String value, boolean fresh) {
@@ -20,8 +20,8 @@ public class Value {
 
 	public Value(ByteBuffer in) throws CharacterCodingException {
 		String[] raw = CHARSET.newDecoder().decode(in).toString().split(DELIMITER, 2);
-		version = Integer.parseInt(raw[0]);
-		value = raw[1];
+		version = Integer.parseInt(raw[1]);
+		value = raw[0];
 	}
 
 	public byte[] hash() {
@@ -29,7 +29,7 @@ public class Value {
 	}
 
 	public ByteBuffer toByteBuffer() {
-		String s = version + DELIMITER + value;
+		String s = value + DELIMITER + version;
 		return ByteBuffer.wrap(s.getBytes(CHARSET));
 	}
 
