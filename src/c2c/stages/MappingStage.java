@@ -96,12 +96,13 @@ public final class MappingStage extends MapReduceStage {
 
 					@Override
 					public void run() {
-						c.flush();
 						working = false;
+						c.flush();
+						
 
 						// Tell the master that we're done
 						//dispatchTo(event.src, MasterStage.app_id,
-						//		new JobStatus(kv.key, true, true));
+							///	new JobStatus(kv.key, true, true));
 					}
 				});
 			}
@@ -116,7 +117,7 @@ public final class MappingStage extends MapReduceStage {
 				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new JobStatus(kv.creator, true, true));
 			}
 		} else {
-			logger.debug("Repeating put...");
+			logger.debug("Retrying put for " + kv);
 			doPut(kv);
 		}
 	}
@@ -125,7 +126,7 @@ public final class MappingStage extends MapReduceStage {
 		Dht.PutReq req = new Dht.PutReq(kv.key.toNode(), kv.value.toByteBuffer(),
 				kv.value.hash(), true, my_sink, kv, 600,
 				my_node_id.address());
-		classifier.dispatch_later(req, 5000);
+		classifier.dispatch_later(req, 500);
 	}
 
 	@Override

@@ -9,11 +9,11 @@ import c2c.api.OutputCollector;
  *
  */
 public class SlowWordCount implements MapReduceApplication {
-	private static final int WAIT_SECONDS = 10;
+	private static final int WAIT_SECONDS = 3;
 
 	@Override
 	public void map(String key, String value, OutputCollector collector) {
-		long t0, t1; // busy-wait for 20 seconds
+		long t0, t1; // busy-wait
 		t0 = System.currentTimeMillis();
 		do {
 			t1 = System.currentTimeMillis();
@@ -28,7 +28,7 @@ public class SlowWordCount implements MapReduceApplication {
 	@Override
 	public void reduce(String key, Iterable<String> values,
 			OutputCollector collector) {
-		long t0, t1; // busy-wait for 20 seconds
+		long t0, t1; // busy-wait
 		t0 = System.currentTimeMillis();
 		do {
 			t1 = System.currentTimeMillis();
