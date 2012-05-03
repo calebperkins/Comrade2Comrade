@@ -115,7 +115,7 @@ public final class MappingStage extends MapReduceStage {
 				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new JobStatus(kv.creator, JobStatus.PERSISTED, true));
 			}
 		} else {
-			logger.debug("Retrying put for " + kv);
+			logger.warn("Retrying put for " + kv + ". System may be over capacity.");
 			doPut(kv);
 		}
 	}

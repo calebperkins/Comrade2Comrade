@@ -93,6 +93,9 @@ public class ClientStage extends MapReduceStage {
 		Logger.getLogger(bamboo.db.StorageManager.class).setLevel(Level.WARN);
 		Logger.getLogger(bamboo.dmgr.DataManager.class).setLevel(Level.WARN);
 		Logger.getLogger(bamboo.dht.Dht.class).setLevel(Level.WARN);
+		Logger.getLogger(bamboo.lss.UdpCC.class).setLevel(Level.WARN);
+		
+		Logger.getLogger(c2c.dht.SecuredRouter.class).setLevel(Level.WARN);
 	}
 
 	@Override
