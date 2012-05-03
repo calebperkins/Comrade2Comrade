@@ -34,15 +34,15 @@ public final class PartitioningStage extends MapReduceStage {
 	}
 	
 	private void handleJobStatus(JobStatus status) {
-		if (!status.mapper) {
-			if (status.done) {
-				reducers.remove(status.key);
-				// TODO reducing finish
-				if (reducers.size() == 0) {
-					logger.info("Reducing finished!");
-				}
-			} else {
-				reducers.add(status.key);
+		if (status.mapper)
+			return;
+		
+		if (status.isWorking()) {
+			reducers.add(status.key); // still working: refresh;
+		} else {
+			reducers.remove(status.key);
+			if (reducers.size() == 0) {
+				logger.info("Reducing finished");
 			}
 		}
 	}

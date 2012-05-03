@@ -28,6 +28,8 @@ public final class MasterStage extends MapReduceStage {
 	
 	// When was the last time we heard from a worker?
 	private final WorkerTable mappers = new WorkerTable();
+	
+	private int remaining = 0;
 
 	public MasterStage() throws Exception {
 		super(JobRequest.class, ReducingUnderway.class);
@@ -54,6 +56,8 @@ public final class MasterStage extends MapReduceStage {
 	private void handleJobRequest(JobRequest req) {
 		LocalJob.put(req.domain, new LocalJob(req.pairs));
 		
+		remaining = req.pairs.size();
+		
 		for (KeyValue pair : req.pairs) {
 			keyvalues.put(pair.key, pair.value);
 			mappers.add(pair.key);
@@ -68,19 +72,22 @@ public final class MasterStage extends MapReduceStage {
 	}
 	
 	private void handleJobStatus(JobStatus status) {
-		if (status.mapper) {
-			if (status.done) {
-				// Mapper is done - remove from tables
-				mappers.remove(status.key);
-				keyvalues.remove(status.key);
-				logger.info("Job done for " + status.key);
-				if (keyvalues.isEmpty()) { // TODO
-					dispatch(new MappingFinished(status.key.domain));
-				}
-			} else {
-				// Mapper still working - refresh in table
-				mappers.add(status.key);
+		if (!status.mapper)
+			return;
+		if (status.isWorking()) {
+			// Mapper still working - refresh in table
+			mappers.add(status.key);
+		} else if (status.isFinished()) {
+			mappers.remove(status.key);
+			keyvalues.remove(status.key);
+			logger.info("Job done for " + status.key);
+			if (keyvalues.isEmpty()) {
+				logger.info("All jobs completed. Waiting for storage to stabilize...");
 			}
+		} else {
+			remaining--;
+			if (remaining == 0)
+				dispatch(new MappingFinished(status.key.domain));
 		}
 	}
 

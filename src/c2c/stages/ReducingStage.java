@@ -125,7 +125,7 @@ public final class ReducingStage extends MapReduceStage {
 					public void run() {
 						if (working) {
 							dispatchTo(src, PartitioningStage.app_id, 
-									new JobStatus(total.key, false, false));
+									new JobStatus(total.key, JobStatus.STARTED, false));
 							acore.registerTimer(1000, this);
 						}
 					}
@@ -139,7 +139,7 @@ public final class ReducingStage extends MapReduceStage {
 					@Override
 					public void run() {
 						working = false;
-						dispatchTo(src, PartitioningStage.app_id, new JobStatus(total.key, true, false));
+						dispatchTo(src, PartitioningStage.app_id, new JobStatus(total.key, JobStatus.FINISHED, false));
 						c.flush();
 					}
 				});

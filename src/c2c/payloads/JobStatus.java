@@ -7,24 +7,42 @@ import ostore.util.QuickSerializable;
 
 public class JobStatus implements QuickSerializable {
 	public final KeyPayload key;
-	public final boolean done, mapper;
+	public final boolean mapper;
+	public final int status;
 	
-	public JobStatus(KeyPayload key, boolean done, boolean mapper) {
+	
+	public static final int STARTED = 0;
+	public static final int FINISHED = 1;
+	public static final int PERSISTED = 2;
+	
+	public JobStatus(KeyPayload key, int status, boolean mapper) {
 		this.key = key;
-		this.done = done;
+		this.status = status;
 		this.mapper = mapper;
+	}
+	
+	public boolean isPersisted() {
+		return status == PERSISTED;
+	}
+	
+	public boolean isFinished() {
+		return status == FINISHED;
+	}
+	
+	public boolean isWorking() {
+		return status == STARTED;
 	}
 	
 	public JobStatus(InputBuffer in) throws QSException {
 		key = (KeyPayload) in.nextObject();
-		done = in.nextBoolean();
+		status = in.nextInt();
 		mapper = in.nextBoolean();
 	}
 	
 	@Override
 	public void serialize(OutputBuffer out) {
 		out.add(key);
-		out.add(done);
+		out.add(status);
 		out.add(mapper);
 	}
 	
@@ -34,7 +52,7 @@ public class JobStatus implements QuickSerializable {
 		sb.append("Job key=");
 		sb.append(key);
 		sb.append(" done=");
-		sb.append(done);
+		sb.append(status);
 		sb.append(" mapper=");
 		sb.append(mapper);
 		return sb.toString();

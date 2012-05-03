@@ -83,7 +83,7 @@ public final class MappingStage extends MapReduceStage {
 					public void run() {
 						if (working) {
 							dispatchTo(event.src, MasterStage.app_id,
-									new JobStatus(kv.key, false, true));
+									new JobStatus(kv.key, JobStatus.STARTED, true));
 							acore.registerTimer(1000, this);
 						}
 					}
@@ -98,11 +98,9 @@ public final class MappingStage extends MapReduceStage {
 					public void run() {
 						working = false;
 						c.flush();
-						
 
 						// Tell the master that we're done
-						//dispatchTo(event.src, MasterStage.app_id,
-							///	new JobStatus(kv.key, true, true));
+						dispatchTo(event.src, MasterStage.app_id, new JobStatus(kv.key, JobStatus.FINISHED, true));
 					}
 				});
 			}
@@ -114,7 +112,7 @@ public final class MappingStage extends MapReduceStage {
 		if (response.result == bamboo_stat.BAMBOO_OK) {
 			remaining.put(kv.creator, remaining.get(kv.creator) - 1);
 			if (remaining.get(kv.creator) == 0) {
-				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new JobStatus(kv.creator, true, true));
+				dispatchTo(jobs.get(kv.key.domain).getMaster(), MasterStage.app_id, new JobStatus(kv.creator, JobStatus.PERSISTED, true));
 			}
 		} else {
 			logger.debug("Retrying put for " + kv);
