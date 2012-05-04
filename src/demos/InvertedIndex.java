@@ -1,7 +1,6 @@
 package demos;
 
-import java.util.Iterator;
-import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 import c2c.api.MapReduceApplication;
 import c2c.api.OutputCollector;
@@ -26,7 +25,7 @@ public class InvertedIndex implements MapReduceApplication {
 	@Override
 	public void reduce(String key, Iterable<String> values,
 			OutputCollector collector) {
-		PriorityQueue<String> sorted = new PriorityQueue<String>();
+		TreeSet<String> sorted = new TreeSet<String>();
 		for (String v : values) {
 			sorted.add(v);
 		}
