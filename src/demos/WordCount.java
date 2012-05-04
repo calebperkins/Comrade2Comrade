@@ -7,9 +7,9 @@ public class WordCount implements MapReduceApplication {
 
 	@Override
 	public void map(String key, String value, OutputCollector collector) {
-		String[] words = value.split("\\s+");
+		String[] words = value.split("[^A-Za-z]");
 		for (String w : words) {
-			collector.collect(w, "1");
+			collector.collect(w.toLowerCase(), "1");
 		}
 	}
 
