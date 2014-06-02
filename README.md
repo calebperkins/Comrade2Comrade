@@ -1,6 +1,6 @@
 # Comrade to Comrade
 
-A MapReduce framework using Bamboo DHT.
+A distributed, fault-tolerant MapReduce framework powered by Bamboo DHT.
 
 # Authors
 
